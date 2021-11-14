@@ -1,3 +1,5 @@
 gcc motorX.c -o motorX
 gcc motorZ.c -o motorZ
-./executor
+gcc commandConsole.c -o commandConsole
+gcc inspectionConsole.c -o inspectionConsole
+./executable
