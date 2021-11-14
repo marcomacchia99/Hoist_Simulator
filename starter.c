@@ -33,9 +33,12 @@ int main(int argc, char *argv[])
 {
     char *fifo_command_motorX = "/tmp/command_motorX";
 
-  char * arg_list_1[] = { "/usr/bin/hoist",  "-e", "./commandconsole"};
-  char * arg_list_2[] = { "/usr/bin/hoist",  "-e", "./inspectionconsole"}; 
+  char * arg_list_1[] = { "/usr/bin/hoist",  "-e", "./commandConsole"};
+  char * arg_list_2[] = { "/usr/bin/hoist",  "-e", "./inspectionConsole"}; 
   char * arg_list_3[] = { "/usr/bin/hoist",  "-e", "./motorX"};
   char * arg_list_4[] = { "/usr/bin/hoist",  "-e", "./motorZ"};
   char * arg_list_5[] = { "/usr/bin/hoist",  "-e", "./watchdog"};
+
+
+  
 }
