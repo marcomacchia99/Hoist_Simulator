@@ -1,1 +1,0 @@
-gcc motorX.c -o motorX

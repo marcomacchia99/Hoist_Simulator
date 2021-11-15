@@ -40,13 +40,13 @@ int main(int argc, char * argv[])
         {
             printf("AVAILABLE COMMANDS: \n");
             //fflush(stdout);
-            printf("W to go UP\n");
+            printf("I to go UP\n");
             //fflush(stdout);
-            printf("S to go DOWN\n");
+            printf("K to go DOWN\n");
             //fflush(stdout);
-            printf("A to go LEFT\n");
+            printf("J to go LEFT\n");
             //fflush(stdout);
-            printf("D to go RIGHT\n");
+            printf("L to go RIGHT\n");
             //fflush(stdout);
             printf("Z to stop z movement\n");
             //fflush(stdout);
