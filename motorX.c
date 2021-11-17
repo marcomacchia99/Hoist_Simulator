@@ -57,13 +57,16 @@ int main(int argc, char *argv[])
 
     float random_error;
     float movement;
-    fd_inspection = open(fifo_inspection_motorX, O_RDONLY);
     fd_command = open(fifo_command_motorX, O_RDONLY);
+    printf("4\n");
     fd_motorX = open(fifo_motorX_value, O_WRONLY);
+    printf("5\n");
+    
+    // fd_inspection = open(fifo_inspection_motorX, O_RDONLY, O_NONBLOCK);
        printf("4\n");
-
     while (1)
     {
+
         //setting timout microseconds to 0
         timeout.tv_usec = 0;
         //initialize with an empty set the file descriptors set
@@ -184,15 +187,15 @@ int main(int argc, char *argv[])
         default: //if something is ready, we read it
             if (FD_ISSET(fd_command, &readfds))
                 read(fd_command, last_input_command, SIZE);
-            if (FD_ISSET(fd_inspection, &readfds))
-               read(fd_inspection, last_input_inspection, SIZE);
+            // if (FD_ISSET(fd_inspection, &readfds))
+            //    read(fd_inspection, last_input_inspection, SIZE);
             break;
         }
     }
     close(fd_command);
     unlink(fifo_command_motorX);
     close(fd_inspection);
-    unlink(fifo_command_motorX);
+    unlink(fifo_inspection_motorX);
     close(fd_motorX);
     unlink(fifo_motorX_value);
 

@@ -19,6 +19,14 @@ int fd_inspection;
 int fd_command;
 int fd_motorZ;
 
+void createfifo(const char *path, mode_t mode)
+{
+    if (mkfifo(path, mode) == -1)
+    {
+        perror("Error creating fifo");
+    }
+}
+
 int main(int argc, char *argv[])
 {
 
@@ -30,22 +38,14 @@ int main(int argc, char *argv[])
     char *fifo_command_motorZ = "/tmp/command_motorZ";
     char *fifo_inspection_motorZ = "/tmp/inspection_motorZ";
     char *fifo_motorZ_value = "/tmp/motorZ_value";
-    //mkfifo(fifo_motorZ_inspection,0666);
-    mkfifo(fifo_command_motorZ, 0666);
-    mkfifo(fifo_inspection_motorZ, 0666);
+    createfifo(fifo_inspection_motorZ,0666);
+    createfifo(fifo_command_motorZ, 0666);
+    createfifo(fifo_motorZ_value, 0666);
     //communicate pid to other processes
     printf("2\n");
     char pid[SIZE];
 
-    fd_command = open(fifo_command_motorZ, O_WRONLY);
-    printf("3\n");
-    //fd_inspection = open(fifo_inspection_motorZ, O_WRONLY);
-    printf("4\n");
-    sprintf(pid, "%d", (int)getpid());
-    write(fd_command, pid, strlen(pid) + 1);
-    //write(fd_inspection, pid, strlen(pid) + 1);
-    close(fd_command);
-    //close(fd_inspection);
+
     char last_input_command[SIZE];
     char last_input_inspection[SIZE];
 
@@ -53,14 +53,17 @@ int main(int argc, char *argv[])
     fd_set readfds;
     char buffer[80];
 
+    printf("3\n");
+
     float random_error;
     float movement;
-    //fd_inspection = open(fifo_inspection_motorZ, O_RDONLY);
+    fd_inspection = open(fifo_inspection_motorZ, O_RDONLY);
     fd_command = open(fifo_command_motorZ, O_RDONLY);
     fd_motorZ = open(fifo_motorZ_value, O_WRONLY);
-
+       printf("4\n");
     while (1)
     {
+
         //setting timout microseconds to 0
         timeout.tv_usec = 0;
         //initialize with an empty set the file descriptors set
@@ -181,15 +184,15 @@ int main(int argc, char *argv[])
         default: //if something is ready, we read it
             if (FD_ISSET(fd_command, &readfds))
                 read(fd_command, last_input_command, SIZE);
-            //if (FD_ISSET(fd_inspection, &readfds))
-            //    read(fd_inspection, last_input_inspection, SIZE);
+            if (FD_ISSET(fd_inspection, &readfds))
+               read(fd_inspection, last_input_inspection, SIZE);
             break;
         }
     }
     close(fd_command);
     unlink(fifo_command_motorZ);
     close(fd_inspection);
-    unlink(fifo_command_motorZ);
+    unlink(fifo_inspection_motorZ);
     close(fd_motorZ);
     unlink(fifo_motorZ_value);
 

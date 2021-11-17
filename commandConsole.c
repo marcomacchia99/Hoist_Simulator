@@ -40,7 +40,9 @@ int main(int argc, char *argv[])
     print_instruction();
 
     fd_motX = open(fifo_command_motorX, O_WRONLY);
+    printf("1\n");
     fd_motZ = open(fifo_command_motorZ, O_WRONLY);
+    printf("2\n");
     while (1)
     {
 

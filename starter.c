@@ -50,7 +50,12 @@ int main(int argc, char *argv[])
     pid_motorZ = spawn(program, arg_list_4);
     pid_watchdog = spawn(program, arg_list_5);
 
-    fd_watchdog = open(fifo_watchdog, O_WRONLY);
+    /* fd_watchdog = open(fifo_watchdog, O_WRONLY);
     sprintf(buffer, "%d,%d,%d,%d,%d", pid_command, pid_inspection, pid_motorX, pid_motorZ, pid_watchdog);
     write(fd_watchdog, buffer, strlen(buffer) + 1);
+
+    close(fd_watchdog);
+    unlink(fifo_watchdog); */
+
+    return 0;
 }

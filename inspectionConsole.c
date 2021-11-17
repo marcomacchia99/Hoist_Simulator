@@ -31,7 +31,6 @@ void createfifo(const char *path, mode_t mode)
 {
     if (mkfifo(path, mode) == -1)
     {
-        printf("Error generating fifo\n");
         perror("Error creating fifo:");
     }
 }
@@ -51,7 +50,7 @@ int main(int argc, char *argv[])
 
     char input_ch[80];
 
-    print_position_and_instructions();
+    //print_position_and_instructions();
 
     fd_motX_value = open(fifo_motorX_value, O_RDONLY);
     fd_motZ_value = open(fifo_motorZ_value, O_RDONLY);
@@ -134,11 +133,11 @@ int main(int argc, char *argv[])
     close(fd_motX);
     unlink(fifo_inspection_motorX);
     close(fd_motZ);
-    unlink(fifo_inspection_motorZ);    
+    unlink(fifo_inspection_motorZ);
     close(fd_motX_value);
-        unlink(fifo_motorX_value);
+    unlink(fifo_motorX_value);
     close(fd_motZ_value);
-        unlink(fifo_motorZ_value);
+    unlink(fifo_motorZ_value);
 
     return 0;
 }
