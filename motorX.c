@@ -30,18 +30,16 @@ int main(int argc, char *argv[])
     //mkfifo(fifo_motorX_inspection,0666);
     mkfifo(fifo_command_motorX, 0666);
     mkfifo(fifo_inspection_motorX, 0666);
-    
 
     //communicate pid to other processes
     char pid[SIZE];
-    fd_command= open(fifo_command_motorX,O_WRONLY);
-    fd_inspection = open(fifo_inspection_motorX,O_WRONLY);
-    sprintf(pid,"%d",(int)getpid());
-    write(fd_command,pid,strlen(pid)+1);
-    write(fd_inspection,pid,strlen(pid)+1);
+    fd_command = open(fifo_command_motorX, O_WRONLY);
+    fd_inspection = open(fifo_inspection_motorX, O_WRONLY);
+    sprintf(pid, "%d", (int)getpid());
+    write(fd_command, pid, strlen(pid) + 1);
+    write(fd_inspection, pid, strlen(pid) + 1);
     close(fd_command);
     close(fd_inspection);
-
 
     char last_input_command[SIZE];
     char last_input_inspection[SIZE];
@@ -52,9 +50,10 @@ int main(int argc, char *argv[])
 
     while (1)
     {
+        ////////////fuori dal while?
         fd_inspection = open(fifo_inspection_motorX, O_RDONLY);
         fd_command = open(fifo_command_motorX, O_RDONLY);
-        fd_motorX = open(fifo_motorX_value,O_WRONLY);
+        fd_motorX = open(fifo_motorX_value, O_WRONLY);
 
         //setting timout microseconds to 0
         timeout.tv_usec = 0;
@@ -82,8 +81,10 @@ int main(int argc, char *argv[])
                 float movement = -movement_distance + random_error;
                 if (position + movement < 0)
                 {
-                    sprintf(buffer, "%s", "no left");
-                    write(fd_inspection, buffer, strlen(buffer) + 1);
+                    position = 0;
+                    sprintf(buffer, "%f", position);
+                    write(fd_motorX, buffer, strlen(buffer) + 1);
+                    sleep(movement_time);
                 }
                 else
                 {
@@ -101,8 +102,9 @@ int main(int argc, char *argv[])
                 float movement = movement_distance + random_error;
                 if (position + movement < max_x)
                 {
-                    sprintf(buffer, "%s", "no right");
+                    sprintf(buffer, "%f", position);
                     write(fd_motorX, buffer, strlen(buffer) + 1);
+                    sleep(movement_time);
                 }
                 else
                 {
@@ -122,31 +124,33 @@ int main(int argc, char *argv[])
             case 82:
             case 114:
                 //reset
-
-                float movement = - (5*movement_distance) + random_error;
-                if (position + movement <= 0)
+                while (position == 0)
                 {
-                    position = 0;
-                    printf(buffer, "%f", position);
-                    write(fd_motorX, buffer, strlen(buffer) + 1);
-                    sleep(movement_time);
-                }
-                else
-                {
-                    position += movement;
-                    sprintf(buffer, "%f", position);
-                    write(fd_motorX, buffer, strlen(buffer) + 1);
-                    sleep(movement_time);
+                    float movement = -(5 * movement_distance) + random_error;
+                    if (position + movement <= 0)
+                    {
+                        position = 0;
+                        printf(buffer, "%f", position);
+                        write(fd_motorX, buffer, strlen(buffer) + 1);
+                        sleep(movement_time);
+                    }
+                    else
+                    {
+                        position += movement;
+                        sprintf(buffer, "%f", position);
+                        write(fd_motorX, buffer, strlen(buffer) + 1);
+                        sleep(movement_time);
+                    }
                 }
                 break;
             case 76:
             case 108:
                 //emergency stop
 
-                    sprintf(buffer, "%f", position);
-                    write(fd_motorX, buffer, strlen(buffer) + 1);
-                    sleep(movement_time);
-                break;    
+                sprintf(buffer, "%f", position);
+                write(fd_motorX, buffer, strlen(buffer) + 1);
+                sleep(movement_time);
+                break;
             default:
                 break;
             }
@@ -156,9 +160,11 @@ int main(int argc, char *argv[])
             fflush(stdout);
             break;
         default: //if something is ready, we read it
-            FD_ISSET(fd_command,&readfds)? read(fd_command, last_input_command, SIZE) : read(fd_inspection, last_input_inspection, SIZE);
+            if (FD_ISSET(fd_command, &readfds))
+                read(fd_command, last_input_command, SIZE);
+            if (FD_ISSET(fd_inspection, &readfds))
+                read(fd_inspection, last_input_inspection, SIZE);
             break;
-
         }
 
         close(fd_command);
