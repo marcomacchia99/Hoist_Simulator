@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <signal.h>
 
-
 #define SIZE 80
 
 float position_x = 0;
@@ -17,10 +16,9 @@ int fd_motZ;
 int fd_motX_value;
 int fd_motZ_value;
 int fd_stdin;
-
-
-
-  
+int fd_inspection;
+int pid_motX;
+int pid_motZ;
 
 void print_position_and_instructions()
 {
@@ -44,37 +42,60 @@ void createfifo(const char *path, mode_t mode)
 int main(int argc, char *argv[])
 {
 
+    struct timeval timeout;
+    timeout.tv_usec = 50;
+    fd_set readfds;
+    fd_set read_stdinfds;
+    char input_ch[SIZE];
+    char value_from_motor_x[SIZE];
+    char value_from_motor_z[SIZE];
+    char buffer[SIZE];
+
     char *fifo_inspection_motorX = "/tmp/inspection_motorX";
     char *fifo_inspection_motorZ = "/tmp/inspection_motorZ";
     char *fifo_motorX_value = "/tmp/motorX_value";
     char *fifo_motorZ_value = "/tmp/motorZ_value";
+    char *fifo_inspection = "/tmp/inspection";
 
     createfifo(fifo_inspection_motorX, 0666);
     createfifo(fifo_inspection_motorZ, 0666);
     createfifo(fifo_motorX_value, 0666);
     createfifo(fifo_motorZ_value, 0666);
+    createfifo(fifo_inspection, 0666);
 
     fd_motX_value = open(fifo_motorX_value, O_RDONLY);
-    printf("1\n");
 
     fd_motZ_value = open(fifo_motorZ_value, O_RDONLY);
-    printf("2\n");
 
     fd_motX = open(fifo_inspection_motorX, O_WRONLY);
-    printf("3\n");
 
     fd_motZ = open(fifo_inspection_motorZ, O_WRONLY);
 
     fd_stdin = fileno(stdin);
 
-    printf("ci sono\n");
+    printf("4\n");
 
-    struct timeval timeout;
-    fd_set readfds;
-    fd_set read_stdinfds;
-    char input_ch[80];
-    char value_from_motor_x[SIZE];
-    char value_from_motor_z[SIZE];
+    FD_ZERO(&readfds);
+    FD_SET(fd_motX_value, &readfds);
+    FD_SET(fd_motZ_value, &readfds);
+    while (1)
+    {
+        if (select(FD_SETSIZE + 1, &readfds, NULL, NULL, &timeout) == 2)
+        {
+            read(fd_motX_value, buffer, SIZE);
+            pid_motX = atoi(buffer);
+            read(fd_motZ_value, buffer, SIZE);
+            pid_motZ = atoi(buffer);
+        }
+        break;
+    }
+
+    close(fd_motX_value);
+    close(fd_motZ_value);
+
+    fd_motX_value = open(fifo_motorX_value, O_RDONLY);
+
+    fd_motZ_value = open(fifo_motorZ_value, O_RDONLY);
 
     print_position_and_instructions();
 
@@ -82,7 +103,7 @@ int main(int argc, char *argv[])
     {
 
         //setting timout microseconds to 0
-        timeout.tv_sec=0;
+        timeout.tv_sec = 0;
         timeout.tv_usec = 100000;
         //initialize with an empty set the file descriptors set
         FD_ZERO(&readfds);
@@ -96,7 +117,7 @@ int main(int argc, char *argv[])
         switch (select(FD_SETSIZE + 1, &read_stdinfds, NULL, NULL, &timeout))
         {
         case 0: //timeout reached, so nothing new
-        
+
             break;
 
         case -1: //error
@@ -107,58 +128,58 @@ int main(int argc, char *argv[])
             read(fd_stdin, input_ch, SIZE);
             input_ch[strcspn(input_ch, "\n")] = 0; //trims the \n command read by user input
             fflush(stdin);
-            
+
             if (strlen(input_ch) > 1)
-        {
-            print_position_and_instructions();
-            printf("Unrecognized command, press only one button at a time!\n");
-            fflush(stdout);
-        }
-
-        else
-        {
-            char out_str[80];
-            sprintf(out_str, "%d", input_ch[0]);
-
-            switch (input_ch[0])
             {
-            case 'R': //R
-            case 'r': //r
                 print_position_and_instructions();
-
-                printf("RESET PRESSED\n");
+                printf("Unrecognized command, press only one button at a time!\n");
                 fflush(stdout);
-                write(fd_motX, out_str, strlen(out_str) + 1);
-                write(fd_motZ, out_str, strlen(out_str) + 1);
-                break;
-
-            case 'S': //S
-            case 's': //s
-                print_position_and_instructions();
-
-                printf("EMERGENCY STOP PRESSED\n");
-                fflush(stdout);
-                write(fd_motX, out_str, strlen(out_str) + 1);
-                write(fd_motZ, out_str, strlen(out_str) + 1);
-                break;
-
-            default:
-                print_position_and_instructions();
-
-                printf("Unrecognized command, please try again: \n");
-                fflush(stdout);
-                break;
             }
-        }
+
+            else
+            {
+                char out_str[80];
+                sprintf(out_str, "%d", input_ch[0]);
+
+                switch (input_ch[0])
+                {
+                case 'R': //R
+                case 'r': //r
+                    print_position_and_instructions();
+
+                    printf("RESET PRESSED\n");
+                    fflush(stdout);
+                    write(fd_motX, out_str, strlen(out_str) + 1);
+                    write(fd_motZ, out_str, strlen(out_str) + 1);
+                    break;
+
+                case 'S': //S
+                case 's': //s
+                    print_position_and_instructions();
+
+                    printf("EMERGENCY STOP PRESSED\n");
+                    fflush(stdout);
+                    // write(fd_motX, out_str, strlen(out_str) + 1);
+                    // write(fd_motZ, out_str, strlen(out_str) + 1);
+                    kill(pid_motX, SIGUSR1);
+                    kill(pid_motZ, SIGUSR1);
+                    break;
+
+                default:
+                    print_position_and_instructions();
+
+                    printf("Unrecognized command, please try again: \n");
+                    fflush(stdout);
+                    break;
+                }
+            }
             break;
         }
-
-        
 
         switch (select(FD_SETSIZE + 1, &readfds, NULL, NULL, &timeout))
         {
         case 0: //timeout reached, so nothing new
-            
+
             break;
 
         case -1: //error

@@ -19,6 +19,10 @@ int fd_inspection;
 int fd_command;
 int fd_motorZ;
 
+char buffer[80];
+char last_input_command[SIZE];
+char last_input_inspection[SIZE];
+
 void createfifo(const char *path, mode_t mode)
 {
     if (mkfifo(path, mode) == -1)
@@ -27,42 +31,46 @@ void createfifo(const char *path, mode_t mode)
     }
 }
 
+void sigusr1_handler(int sig)
+{
+    printf("EMERGENCY BUTTON PRESSED\n");
+    sprintf(buffer, "%f", position);
+    printf("%.3f\n", position);
+    write(fd_motorZ, buffer, strlen(buffer) + 1);
+    strcpy(last_input_inspection, "");
+    strcpy(last_input_command, "");
+}
+
 int main(int argc, char *argv[])
 {
 
-    printf("1\n");
     //randomizing seed for random error generator
     srand(time(NULL));
     fflush(stdout);
+
+    signal(SIGUSR1, sigusr1_handler);
+
     //pipe file path
     char *fifo_command_motorZ = "/tmp/command_motorZ";
     char *fifo_inspection_motorZ = "/tmp/inspection_motorZ";
     char *fifo_motorZ_value = "/tmp/motorZ_value";
-    createfifo(fifo_inspection_motorZ,0666);
+    createfifo(fifo_inspection_motorZ, 0666);
     createfifo(fifo_command_motorZ, 0666);
     createfifo(fifo_motorZ_value, 0666);
-   
-    printf("2\n");
-
-
-    char last_input_command[SIZE];
-    char last_input_inspection[SIZE];
 
     struct timeval timeout;
     fd_set readfds;
-    char buffer[80];
-
-    printf("3\n");
 
     float random_error;
     float movement;
     fd_command = open(fifo_command_motorZ, O_RDONLY);
-    printf("4\n");
     fd_motorZ = open(fifo_motorZ_value, O_WRONLY);
-    printf("5\n");
-    
+
     fd_inspection = open(fifo_inspection_motorZ, O_RDONLY);
-       printf("4\n");
+
+    sprintf(buffer, "%d", (int)getpid());
+    write(fd_motorZ, buffer, strlen(buffer) + 1);
+    system("clear");
     while (1)
     {
 
@@ -76,13 +84,12 @@ int main(int argc, char *argv[])
         FD_SET(fd_inspection, &readfds);
 
         //generating a small random error between -0.02 and 0.02
-        random_error = (float)(-20 + rand()%40)/1000;
+        random_error = (float)(-20 + rand() % 40) / 1000;
         //select return -1 in case of error, 0 if timeout reached, or the number of ready descriptors
         switch (select(FD_SETSIZE + 1, &readfds, NULL, NULL, &timeout))
         {
         case 0: //timeout reached, so nothing new
 
-            
             switch (atoi(last_input_command))
             {
             case 'K':
@@ -140,7 +147,7 @@ int main(int argc, char *argv[])
             default:
                 break;
             }
-            
+
             switch (atoi(last_input_inspection))
             {
             case 'R':
@@ -189,11 +196,11 @@ int main(int argc, char *argv[])
         default: //if something is ready, we read it
             if (FD_ISSET(fd_command, &readfds))
                 read(fd_command, last_input_command, SIZE);
-            if (FD_ISSET(fd_inspection, &readfds)){
+            if (FD_ISSET(fd_inspection, &readfds))
+            {
 
-               read(fd_inspection, last_input_inspection, SIZE);
+                read(fd_inspection, last_input_inspection, SIZE);
                 strcpy(last_input_command, "");
-               
             }
             break;
         }

@@ -19,6 +19,10 @@ int fd_inspection;
 int fd_command;
 int fd_motorX;
 
+char buffer[80];
+char last_input_command[SIZE];
+char last_input_inspection[SIZE];
+
 void createfifo(const char *path, mode_t mode)
 {
     if (mkfifo(path, mode) == -1)
@@ -27,13 +31,25 @@ void createfifo(const char *path, mode_t mode)
     }
 }
 
+void sigusr1_handler(int sig)
+{
+    printf("EMERGENCY BUTTON PRESSED\n");
+    sprintf(buffer, "%f", position);
+    printf("%.3f\n", position);
+    write(fd_motorX, buffer, strlen(buffer) + 1);
+    strcpy(last_input_inspection, "");
+    strcpy(last_input_command, "");
+}
+
 int main(int argc, char *argv[])
 {
 
-    printf("1\n");
     //randomizing seed for random error generator
     srand(time(NULL));
     fflush(stdout);
+
+    signal(SIGUSR1, sigusr1_handler);
+
     //pipe file path
     char *fifo_command_motorX = "/tmp/command_motorX";
     char *fifo_inspection_motorX = "/tmp/inspection_motorX";
@@ -42,32 +58,24 @@ int main(int argc, char *argv[])
     createfifo(fifo_command_motorX, 0666);
     createfifo(fifo_motorX_value, 0666);
 
-
-    printf("2\n");
-
-    char last_input_command[SIZE];
-    char last_input_inspection[SIZE];
-
     struct timeval timeout;
     fd_set readfds;
-    char buffer[80];
-
-    printf("3\n");
 
     float random_error;
     float movement;
     fd_command = open(fifo_command_motorX, O_RDONLY);
-    printf("4\n");
     fd_motorX = open(fifo_motorX_value, O_WRONLY);
-    printf("5\n");
-
     fd_inspection = open(fifo_inspection_motorX, O_RDONLY);
-    printf("4\n");
+
+    sprintf(buffer, "%d", (int)getpid());
+    write(fd_motorX, buffer, strlen(buffer) + 1);
+
+    system("clear");
     while (1)
     {
 
         //setting timout microseconds to 0
-        timeout.tv_usec = 0;
+        timeout.tv_usec = 100000;
         //initialize with an empty set the file descriptors set
         FD_ZERO(&readfds);
 
@@ -81,7 +89,6 @@ int main(int argc, char *argv[])
         switch (select(FD_SETSIZE + 1, &readfds, NULL, NULL, &timeout))
         {
         case 0: //timeout reached, so nothing new
-
             switch (atoi(last_input_command))
             {
             case 'J':
@@ -166,33 +173,32 @@ int main(int argc, char *argv[])
                         sleep(movement_time);
                     }
                     strcpy(last_input_inspection, "");
-                    
                 }
                 break;
             case 'S':
             case 's':
                 //emergency stop
-
-                sprintf(buffer, "%f", position);
-                printf("%.3f\n", position);
-                write(fd_motorX, buffer, strlen(buffer) + 1);
-                sleep(movement_time);
                 break;
             default:
                 break;
             }
             break;
         case -1: //error
+        
             perror("Error inside motorX: ");
             fflush(stdout);
             break;
         default: //if something is ready, we read it
-           if (FD_ISSET(fd_command, &readfds))
+            if (FD_ISSET(fd_command, &readfds))
+            {
+
                 read(fd_command, last_input_command, SIZE);
+                printf("letto");
+            }
             if (FD_ISSET(fd_inspection, &readfds))
             {
 
-               read(fd_inspection, last_input_inspection, SIZE);
+                read(fd_inspection, last_input_inspection, SIZE);
                 strcpy(last_input_command, "");
             }
             break;

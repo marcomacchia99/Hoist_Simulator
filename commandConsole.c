@@ -34,15 +34,12 @@ int main(int argc, char *argv[])
     mkfifo(fifo_command_motorX, 0666);
     mkfifo(fifo_command_motorZ, 0666);
 
-
     char input_ch[80];
 
     print_instruction();
 
     fd_motX = open(fifo_command_motorX, O_WRONLY);
-    printf("1\n");
     fd_motZ = open(fifo_command_motorZ, O_WRONLY);
-    printf("2\n");
     while (1)
     {
 
@@ -116,7 +113,6 @@ int main(int argc, char *argv[])
     unlink(fifo_command_motorX);
     close(fd_motZ);
     unlink(fifo_command_motorZ);
-
 
     return 0;
 }
