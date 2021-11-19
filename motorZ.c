@@ -57,9 +57,12 @@ int main(int argc, char *argv[])
 
     float random_error;
     float movement;
-    fd_inspection = open(fifo_inspection_motorZ, O_RDONLY);
     fd_command = open(fifo_command_motorZ, O_RDONLY);
+    printf("4\n");
     fd_motorZ = open(fifo_motorZ_value, O_WRONLY);
+    printf("5\n");
+    
+    fd_inspection = open(fifo_inspection_motorZ, O_RDONLY);
        printf("4\n");
     while (1)
     {
@@ -184,8 +187,8 @@ int main(int argc, char *argv[])
         default: //if something is ready, we read it
             if (FD_ISSET(fd_command, &readfds))
                 read(fd_command, last_input_command, SIZE);
-            if (FD_ISSET(fd_inspection, &readfds))
-               read(fd_inspection, last_input_inspection, SIZE);
+            // if (FD_ISSET(fd_inspection, &readfds))
+            //    read(fd_inspection, last_input_inspection, SIZE);
             break;
         }
     }

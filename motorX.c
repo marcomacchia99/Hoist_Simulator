@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
     fd_motorX = open(fifo_motorX_value, O_WRONLY);
     printf("5\n");
     
-    // fd_inspection = open(fifo_inspection_motorX, O_RDONLY, O_NONBLOCK);
+    fd_inspection = open(fifo_inspection_motorX, O_RDONLY);
        printf("4\n");
     while (1)
     {

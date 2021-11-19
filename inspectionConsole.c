@@ -20,8 +20,8 @@ void print_position_and_instructions()
 {
 
     system("clear");
-    printf("X position: %f\n", position_x);
-    printf("Z position: %f\n", position_z);
+    printf("X position: %.3f\n", position_x);
+    printf("Z position: %.3f\n", position_z);
     printf("\n\nPRESS R TO RESET THE HOIST, PRESS S FOR EMERGENCY STOP\n\n");
 
     fflush(stdout);
@@ -53,15 +53,26 @@ int main(int argc, char *argv[])
     //print_position_and_instructions();
 
     fd_motX_value = open(fifo_motorX_value, O_RDONLY);
+    printf("1\n");
+
     fd_motZ_value = open(fifo_motorZ_value, O_RDONLY);
+    printf("2\n");
+
     fd_motX = open(fifo_inspection_motorX, O_WRONLY);
+    printf("3\n");
+
     fd_motZ = open(fifo_inspection_motorZ, O_WRONLY);
+
+    printf("ci sono\n");
 
     struct timeval timeout;
     fd_set readfds;
     char buffer[80];
     char value_from_motor_x[SIZE];
     char value_from_motor_z[SIZE];
+
+    print_position_and_instructions();
+
     while (1)
     {
         //appena premi esegue, anzichè premere invio
@@ -75,8 +86,6 @@ int main(int argc, char *argv[])
         //add the selected file descriptor to the selected fd_set
         FD_SET(fd_motX_value, &readfds);
         FD_SET(fd_motZ_value, &readfds);
-
-        print_position_and_instructions();
 
         /* if (strlen(input_ch) > 1)
         {
@@ -120,12 +129,19 @@ int main(int argc, char *argv[])
             fflush(stdout);
             break;
         default: //if something is ready, we read it
+            printf("ho letto\n");
             if (FD_ISSET(fd_motX_value, &readfds))
+            {
                 read(fd_motX_value, value_from_motor_x, SIZE);
-            position_x = atoi(value_from_motor_x);
+                position_x = atof(value_from_motor_x);
+            }
             if (FD_ISSET(fd_motZ_value, &readfds))
+            {
                 read(fd_motZ_value, value_from_motor_z, SIZE);
-            position_z = atoi(value_from_motor_z);
+                position_z = atof(value_from_motor_z);
+            }
+
+            print_position_and_instructions();
             break;
         }
     }
