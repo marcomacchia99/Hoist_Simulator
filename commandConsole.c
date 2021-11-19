@@ -63,43 +63,43 @@ int main(int argc, char *argv[])
 
             switch (input_ch[0])
             {
-            case 73:
-            case 105:
+            case 'I':
+            case 'i':
                 printf("UP PRESSED\n");
                 fflush(stdout);
                 write(fd_motZ, out_str, strlen(out_str) + 1);
                 break;
 
-            case 75:
-            case 107:
+            case 'K':
+            case 'k':
                 printf("DOWN PRESSED\n");
                 fflush(stdout);
                 write(fd_motZ, out_str, strlen(out_str) + 1);
                 break;
 
-            case 74:
-            case 106:
+            case 'J':
+            case 'j':
                 printf("LEFT PRESSED\n");
                 fflush(stdout);
                 write(fd_motX, out_str, strlen(out_str) + 1);
                 break;
 
-            case 76:
-            case 108:
+            case 'L':
+            case 'l':
                 printf("RIGHT PRESSED\n");
                 fflush(stdout);
                 write(fd_motX, out_str, strlen(out_str) + 1);
                 break;
 
-            case 88:
-            case 120:
+            case 'X':
+            case 'x':
                 printf("STOP X PRESSED\n");
                 fflush(stdout);
                 write(fd_motX, out_str, strlen(out_str) + 1);
                 break;
 
-            case 90:
-            case 122:
+            case 'Z':
+            case 'z':
                 printf("STOP Z PRESSED\n");
                 fflush(stdout);
                 write(fd_motZ, out_str, strlen(out_str) + 1);

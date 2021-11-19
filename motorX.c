@@ -38,13 +38,12 @@ int main(int argc, char *argv[])
     char *fifo_command_motorX = "/tmp/command_motorX";
     char *fifo_inspection_motorX = "/tmp/inspection_motorX";
     char *fifo_motorX_value = "/tmp/motorX_value";
-    createfifo(fifo_inspection_motorX,0666);
+    createfifo(fifo_inspection_motorX, 0666);
     createfifo(fifo_command_motorX, 0666);
     createfifo(fifo_motorX_value, 0666);
-    //communicate pid to other processes
-    printf("2\n");
-    char pid[SIZE];
 
+
+    printf("2\n");
 
     char last_input_command[SIZE];
     char last_input_inspection[SIZE];
@@ -61,9 +60,9 @@ int main(int argc, char *argv[])
     printf("4\n");
     fd_motorX = open(fifo_motorX_value, O_WRONLY);
     printf("5\n");
-    
+
     fd_inspection = open(fifo_inspection_motorX, O_RDONLY);
-       printf("4\n");
+    printf("4\n");
     while (1)
     {
 
@@ -74,18 +73,19 @@ int main(int argc, char *argv[])
 
         //add the selected file descriptor to the selected fd_set
         FD_SET(fd_command, &readfds);
-        //FD_SET(fd_inspection, &readfds);
+        FD_SET(fd_inspection, &readfds);
 
         //generating a small random error between -0.02 and 0.02
-        random_error = (float)(-20 + rand()%40)/1000;
+        random_error = (float)(-20 + rand() % 40) / 1000;
         //select return -1 in case of error, 0 if timeout reached, or the number of ready descriptors
         switch (select(FD_SETSIZE + 1, &readfds, NULL, NULL, &timeout))
         {
         case 0: //timeout reached, so nothing new
+
             switch (atoi(last_input_command))
             {
-            case 74:
-            case 106:
+            case 'J':
+            case 'j':
                 // left
 
                 movement = -movement_distance + random_error;
@@ -107,8 +107,8 @@ int main(int argc, char *argv[])
                 }
                 break;
 
-            case 76:
-            case 108:
+            case 'L':
+            case 'l':
                 //right
 
                 movement = movement_distance + random_error;
@@ -129,8 +129,9 @@ int main(int argc, char *argv[])
                     sleep(movement_time);
                 }
                 break;
-            case 88:
-            case 120:
+            case 'X':
+            case 'x':
+                //stop x
                 printf("%.3f\n", position);
                 fflush(stdout);
                 write(fd_motorX, buffer, strlen(buffer) + 1);
@@ -139,14 +140,13 @@ int main(int argc, char *argv[])
             default:
                 break;
             }
-            break;
 
             switch (atoi(last_input_inspection))
             {
-            case 82:
-            case 114:
+            case 'R':
+            case 'r':
                 //reset
-                while (position == 0)
+                while (position != 0)
                 {
                     movement = -(5 * movement_distance) + random_error;
                     if (position + movement <= 0)
@@ -165,10 +165,12 @@ int main(int argc, char *argv[])
                         write(fd_motorX, buffer, strlen(buffer) + 1);
                         sleep(movement_time);
                     }
+                    strcpy(last_input_inspection, "");
+                    
                 }
                 break;
-            case 76:
-            case 108:
+            case 'S':
+            case 's':
                 //emergency stop
 
                 sprintf(buffer, "%f", position);
@@ -179,16 +181,20 @@ int main(int argc, char *argv[])
             default:
                 break;
             }
-
+            break;
         case -1: //error
             perror("Error inside motorX: ");
             fflush(stdout);
             break;
         default: //if something is ready, we read it
-            if (FD_ISSET(fd_command, &readfds))
+           if (FD_ISSET(fd_command, &readfds))
                 read(fd_command, last_input_command, SIZE);
-            // if (FD_ISSET(fd_inspection, &readfds))
-            //    read(fd_inspection, last_input_inspection, SIZE);
+            if (FD_ISSET(fd_inspection, &readfds))
+            {
+
+               read(fd_inspection, last_input_inspection, SIZE);
+                strcpy(last_input_command, "");
+            }
             break;
         }
     }
