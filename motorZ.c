@@ -70,12 +70,16 @@ int main(int argc, char *argv[])
 
     sprintf(buffer, "%d", (int)getpid());
     write(fd_motorZ, buffer, strlen(buffer) + 1);
+
+    close(fd_motorZ);
+    fd_motorZ = open(fifo_motorZ_value, O_WRONLY);
+
     system("clear");
     while (1)
     {
 
         //setting timout microseconds to 0
-        timeout.tv_usec = 0;
+        timeout.tv_usec = 100000;
         //initialize with an empty set the file descriptors set
         FD_ZERO(&readfds);
 
@@ -153,7 +157,7 @@ int main(int argc, char *argv[])
             case 'R':
             case 'r':
                 //reset
-                while (position != 0)
+                while (position > 0)
                 {
                     movement = -(5 * movement_distance) + random_error;
                     if (position + movement <= 0)
@@ -173,6 +177,8 @@ int main(int argc, char *argv[])
                         sleep(movement_time);
                     }
                     strcpy(last_input_inspection, "");
+                    sprintf(buffer, "%f", position);
+                    write(fd_motorZ, buffer, strlen(buffer) + 1);
                 }
                 break;
             case 'S':

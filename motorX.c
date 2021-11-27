@@ -35,10 +35,11 @@ void sigusr1_handler(int sig)
 {
     printf("EMERGENCY BUTTON PRESSED\n");
     sprintf(buffer, "%f", position);
-    printf("%.3f\n", position);
+    printf("STOP %.3f\n", position);
     write(fd_motorX, buffer, strlen(buffer) + 1);
     strcpy(last_input_inspection, "");
     strcpy(last_input_command, "");
+    printf("inpsection messo a : %d\n",atoi(last_input_inspection));
 }
 
 int main(int argc, char *argv[])
@@ -69,6 +70,9 @@ int main(int argc, char *argv[])
 
     sprintf(buffer, "%d", (int)getpid());
     write(fd_motorX, buffer, strlen(buffer) + 1);
+
+    close(fd_motorX);
+    fd_motorX = open(fifo_motorX_value, O_WRONLY);
 
     system("clear");
     while (1)
@@ -148,20 +152,23 @@ int main(int argc, char *argv[])
                 break;
             }
 
+            printf("inpsection: %d\n",atoi(last_input_inspection));
             switch (atoi(last_input_inspection))
             {
             case 'R':
             case 'r':
+            printf("entro qui dentro\n");
                 //reset
-                while (position != 0)
-                {
+                // while (position > 0)
+                // {
                     movement = -(5 * movement_distance) + random_error;
                     if (position + movement <= 0)
                     {
                         position = 0;
                         sprintf(buffer, "%f", position);
-                        printf("%.3f\n", position);
+                        printf("SPRINTF %.3f\n", position);
                         write(fd_motorX, buffer, strlen(buffer) + 1);
+                        strcpy(last_input_inspection, "");
                         sleep(movement_time);
                     }
                     else
@@ -172,8 +179,9 @@ int main(int argc, char *argv[])
                         write(fd_motorX, buffer, strlen(buffer) + 1);
                         sleep(movement_time);
                     }
-                    strcpy(last_input_inspection, "");
-                }
+                    // sprintf(buffer, "%f", position);
+                    // write(fd_motorX, buffer, strlen(buffer) + 1);
+                //}
                 break;
             case 'S':
             case 's':
@@ -184,7 +192,7 @@ int main(int argc, char *argv[])
             }
             break;
         case -1: //error
-        
+
             perror("Error inside motorX: ");
             fflush(stdout);
             break;
@@ -193,11 +201,9 @@ int main(int argc, char *argv[])
             {
 
                 read(fd_command, last_input_command, SIZE);
-                printf("letto");
             }
             if (FD_ISSET(fd_inspection, &readfds))
             {
-
                 read(fd_inspection, last_input_inspection, SIZE);
                 strcpy(last_input_command, "");
             }

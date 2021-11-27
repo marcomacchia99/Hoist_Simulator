@@ -75,20 +75,10 @@ int main(int argc, char *argv[])
 
     printf("4\n");
 
-    FD_ZERO(&readfds);
-    FD_SET(fd_motX_value, &readfds);
-    FD_SET(fd_motZ_value, &readfds);
-    while (1)
-    {
-        if (select(FD_SETSIZE + 1, &readfds, NULL, NULL, &timeout) == 2)
-        {
-            read(fd_motX_value, buffer, SIZE);
-            pid_motX = atoi(buffer);
-            read(fd_motZ_value, buffer, SIZE);
-            pid_motZ = atoi(buffer);
-        }
-        break;
-    }
+    read(fd_motX_value, buffer, SIZE);
+    pid_motX = atoi(buffer);
+    read(fd_motZ_value, buffer, SIZE);
+    pid_motZ = atoi(buffer);
 
     close(fd_motX_value);
     close(fd_motZ_value);
@@ -159,8 +149,6 @@ int main(int argc, char *argv[])
 
                     printf("EMERGENCY STOP PRESSED\n");
                     fflush(stdout);
-                    // write(fd_motX, out_str, strlen(out_str) + 1);
-                    // write(fd_motZ, out_str, strlen(out_str) + 1);
                     kill(pid_motX, SIGUSR1);
                     kill(pid_motZ, SIGUSR1);
                     break;
@@ -187,15 +175,16 @@ int main(int argc, char *argv[])
             fflush(stdout);
             break;
         default: //if something is ready, we read it
-            printf("ho letto\n");
             if (FD_ISSET(fd_motX_value, &readfds))
             {
                 read(fd_motX_value, value_from_motor_x, SIZE);
+
                 position_x = atof(value_from_motor_x);
             }
             if (FD_ISSET(fd_motZ_value, &readfds))
             {
                 read(fd_motZ_value, value_from_motor_z, SIZE);
+
                 position_z = atof(value_from_motor_z);
             }
 
