@@ -7,8 +7,12 @@
 #include <stdlib.h>
 #include <signal.h>
 
+#define SIZE 80
+
 int fd_motX;
 int fd_motZ;
+
+int pid_watchdog;
 
 void print_instruction()
 {
@@ -30,9 +34,29 @@ int main(int argc, char *argv[])
     // pipe file path
     char *fifo_command_motorX = "/tmp/command_motorX";
     char *fifo_command_motorZ = "/tmp/command_motorZ";
+    char *fifo_watchdog_pid = "/tmp/watchdog_pid_c";
+    char *fifo_command_pid = "/tmp/pid_c";
 
     mkfifo(fifo_command_motorX, 0666);
     mkfifo(fifo_command_motorZ, 0666);
+    mkfifo(fifo_watchdog_pid, 0666);
+    mkfifo(fifo_watchdog_pid, 0666);
+
+
+//getting watchdog pid
+    char buffer[SIZE];
+    int fd_watchdog_pid = open(fifo_watchdog_pid, O_RDONLY);
+    read(fd_watchdog_pid, buffer, SIZE);
+    pid_watchdog = atoi(buffer);
+    close(fd_watchdog_pid);
+
+
+//writing own pid
+    int fd_command_pid = open(fifo_command_pid, O_WRONLY);
+    sprintf(buffer, "%d", (int)getpid());
+    write(fd_command_pid, buffer, SIZE);
+    close(fd_command_pid);
+
 
     char input_ch[80];
 
@@ -40,6 +64,7 @@ int main(int argc, char *argv[])
 
     fd_motX = open(fifo_command_motorX, O_WRONLY);
     fd_motZ = open(fifo_command_motorZ, O_WRONLY);
+
     while (1)
     {
 
@@ -65,6 +90,7 @@ int main(int argc, char *argv[])
                 printf("UP PRESSED\n");
                 fflush(stdout);
                 write(fd_motZ, out_str, strlen(out_str) + 1);
+                kill(pid_watchdog, SIGUSR1);
                 break;
 
             case 'K':
@@ -72,6 +98,7 @@ int main(int argc, char *argv[])
                 printf("DOWN PRESSED\n");
                 fflush(stdout);
                 write(fd_motZ, out_str, strlen(out_str) + 1);
+                kill(pid_watchdog, SIGUSR1);
                 break;
 
             case 'J':
@@ -79,6 +106,7 @@ int main(int argc, char *argv[])
                 printf("LEFT PRESSED\n");
                 fflush(stdout);
                 write(fd_motX, out_str, strlen(out_str) + 1);
+                kill(pid_watchdog, SIGUSR1);
                 break;
 
             case 'L':
@@ -86,6 +114,7 @@ int main(int argc, char *argv[])
                 printf("RIGHT PRESSED\n");
                 fflush(stdout);
                 write(fd_motX, out_str, strlen(out_str) + 1);
+                kill(pid_watchdog, SIGUSR1);
                 break;
 
             case 'X':
@@ -93,6 +122,7 @@ int main(int argc, char *argv[])
                 printf("STOP X PRESSED\n");
                 fflush(stdout);
                 write(fd_motX, out_str, strlen(out_str) + 1);
+                kill(pid_watchdog, SIGUSR1);
                 break;
 
             case 'Z':
@@ -100,6 +130,7 @@ int main(int argc, char *argv[])
                 printf("STOP Z PRESSED\n");
                 fflush(stdout);
                 write(fd_motZ, out_str, strlen(out_str) + 1);
+                kill(pid_watchdog, SIGUSR1);
                 break;
 
             default:

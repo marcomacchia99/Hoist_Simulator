@@ -40,6 +40,16 @@ int main(int argc, char *argv[])
     mkfifo(fifo_starter_watchdog, 0666);
     mkfifo(fifo_starter_inspection, 0666);
 
+    char *fifo_watchdog_pid_command = "/tmp/watchdog_pid_c";
+    char *fifo_watchdog_pid_inspection = "/tmp/watchdog_pid_i";
+    char *fifo_watchdog_pid_motX = "/tmp/watchdog_pid_x";
+    char *fifo_watchdog_pid_motZ = "/tmp/watchdog_pid_z";
+
+    mkfifo(fifo_watchdog_pid_command, 0666);
+    mkfifo(fifo_watchdog_pid_inspection, 0666);
+    mkfifo(fifo_watchdog_pid_motX, 0666);
+    mkfifo(fifo_watchdog_pid_motZ, 0666);
+
     char program[] = "/usr/bin/konsole";
     char *arg_list_1[] = {"/usr/bin/konsole", "-e", "./commandConsole", "", (char *)NULL};
     char *arg_list_2[] = {"/usr/bin/konsole", "-e", "./inspectionConsole", "", (char *)NULL};
@@ -53,8 +63,6 @@ int main(int argc, char *argv[])
     pid_inspection = spawn(program, arg_list_2);
     pid_watchdog = spawn(program, arg_list_5);
 
-
-
     fd_watchdog = open(fifo_starter_watchdog, O_WRONLY);
     sprintf(buffer, "%d", pid_command);
     write(fd_watchdog, buffer, strlen(buffer) + 1);
@@ -64,7 +72,6 @@ int main(int argc, char *argv[])
     write(fd_watchdog, buffer, strlen(buffer) + 1);
     sprintf(buffer, "%d", pid_motorZ);
     write(fd_watchdog, buffer, strlen(buffer) + 1);
-    
 
     close(fd_watchdog);
     unlink(fifo_starter_watchdog);

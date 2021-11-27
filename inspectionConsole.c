@@ -19,6 +19,7 @@ int fd_stdin;
 int fd_inspection;
 int pid_motX;
 int pid_motZ;
+int pid_watchdog;
 
 void print_position_and_instructions()
 {
@@ -55,13 +56,29 @@ int main(int argc, char *argv[])
     char *fifo_inspection_motorZ = "/tmp/inspection_motorZ";
     char *fifo_motorX_value = "/tmp/motorX_value";
     char *fifo_motorZ_value = "/tmp/motorZ_value";
-    char *fifo_inspection = "/tmp/inspection";
+    char *fifo_watchdog_pid = "/tmp/watchdog_pid_i";
+    char *fifo_inspection_pid = "/tmp/pid_i";
 
     createfifo(fifo_inspection_motorX, 0666);
     createfifo(fifo_inspection_motorZ, 0666);
     createfifo(fifo_motorX_value, 0666);
     createfifo(fifo_motorZ_value, 0666);
-    createfifo(fifo_inspection, 0666);
+    createfifo(fifo_watchdog_pid, 0666);
+    createfifo(fifo_inspection_pid, 0666);
+
+    printf("1\n");
+    int fd_watchdog_pid = open(fifo_watchdog_pid, O_RDONLY);
+    read(fd_watchdog_pid, buffer, SIZE);
+    pid_watchdog = atoi(buffer);
+
+    close(fd_watchdog_pid);
+
+
+    //writing own pid
+    int fd_inspection_pid = open(fifo_inspection_pid, O_WRONLY);
+    sprintf(buffer, "%d", (int)getpid());
+    write(fd_inspection_pid, buffer, SIZE);
+    close(fd_inspection_pid);
 
     fd_motX_value = open(fifo_motorX_value, O_RDONLY);
 
@@ -73,7 +90,6 @@ int main(int argc, char *argv[])
 
     fd_stdin = fileno(stdin);
 
-    printf("4\n");
 
     read(fd_motX_value, buffer, SIZE);
     pid_motX = atoi(buffer);
@@ -141,6 +157,7 @@ int main(int argc, char *argv[])
                     fflush(stdout);
                     write(fd_motX, out_str, strlen(out_str) + 1);
                     write(fd_motZ, out_str, strlen(out_str) + 1);
+                    kill(pid_watchdog, SIGUSR1);
                     break;
 
                 case 'S': //S
@@ -151,6 +168,7 @@ int main(int argc, char *argv[])
                     fflush(stdout);
                     kill(pid_motX, SIGUSR1);
                     kill(pid_motZ, SIGUSR1);
+                    kill(pid_watchdog, SIGUSR1);
                     break;
 
                 default:
