@@ -1,6 +1,7 @@
-The project, which constitutes the first assignment of ARP for Robotics students, consists in designing and developing an interactive simulator of an hoist with 2 d.o.f.
-in which two different consoles allow the user to activate the hoist.
+The project, which constitutes the first assignment of ARP for Robotics students, consists in designing and developing an interactive simulator of an hoist with 2 d.o.f. in which two different consoles allow the user to activate the hoist.
+
 Thanks to two different motors, motX and motZ, a box can move along the just mentioned axis respectively on x and z direction.
+
 The movement is bound from 0 to a maximum value of distance, which is set to 1, for each motor. 
 The hoist is able to shift on both x and z axis at the same time.
 
@@ -11,7 +12,10 @@ From the user side the commandConsole and the inspectionConsole acts as an inter
 commands and to view the current position on the axis and to stop or reset the hoist position.
 
 The development has been made on Linux platform and it was monitored by using the terminal to view process shells.
+
 The communication between the processes was managed through the use of pipes, that allow to write or read from a process to another one
 through a one to one connection.
+
 For the stop from the inspectionConsole it was necessary to introduce signals to manage the problem through interrupts.
+
 The signals were also used for the implementation of the emergency stop, managed by interrupt.

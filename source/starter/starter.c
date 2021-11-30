@@ -37,17 +37,17 @@ int main(int argc, char *argv[])
 {
 
     char console[] = "/usr/bin/konsole";
-    char *arg_list_1[] = {"/usr/bin/konsole", "-e", "./commandConsole", "", (char *)NULL};
-    char *arg_list_2[] = {"/usr/bin/konsole", "-e", "./inspectionConsole", "", (char *)NULL};
-    char *arg_list_3[] = { "./motorX", "", (char *)NULL};
-    char *arg_list_4[] = { "./motorZ", "", (char *)NULL};
-    char *arg_list_5[] = { "./watchdog", "", (char *)NULL};
+    char *arg_list_1[] = {"/usr/bin/konsole", "-e", "./../command_console/commandConsole", "", (char *)NULL};
+    char *arg_list_2[] = {"/usr/bin/konsole", "-e", "./../inspection_console/inspectionConsole", "", (char *)NULL};
+    char *arg_list_3[] = { "./../motor_x/motorX", "", (char *)NULL};
+    char *arg_list_4[] = { "./../motor_z/motorZ", "", (char *)NULL};
+    char *arg_list_5[] = { "./../watchdog/watchdog", "", (char *)NULL};
 
-    pid_motorX = spawn("./motorX", arg_list_3);
-    pid_motorZ = spawn("./motorZ", arg_list_4);
+    pid_motorX = spawn("./../motor_x/motorX", arg_list_3);
+    pid_motorZ = spawn("./../motor_z/motorZ", arg_list_4);
     pid_command = spawn(console, arg_list_1);
     pid_inspection = spawn(console, arg_list_2);
-    pid_watchdog = spawn("./watchdog", arg_list_5);
+    pid_watchdog = spawn("./../watchdog/watchdog", arg_list_5);
 
 
 

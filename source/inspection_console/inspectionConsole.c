@@ -50,6 +50,8 @@ int main(int argc, char *argv[])
     char *fifo_motorZ_value = "/tmp/motorZ_value";
     char *fifo_watchdog_pid = "/tmp/watchdog_pid_i";
     char *fifo_inspection_pid = "/tmp/pid_i";
+    char *fifo_motX_pid_inspection = "/tmp/pid_x_i";
+    char *fifo_motZ_pid_inspection = "/tmp/pid_z_i";
 
     mkfifo(fifo_inspection_motorX, 0666);
     mkfifo(fifo_inspection_motorZ, 0666);
@@ -57,6 +59,8 @@ int main(int argc, char *argv[])
     mkfifo(fifo_motorZ_value, 0666);
     mkfifo(fifo_watchdog_pid, 0666);
     mkfifo(fifo_inspection_pid, 0666);
+    mkfifo(fifo_motX_pid_inspection, 0666);
+    mkfifo(fifo_motZ_pid_inspection, 0666);
 
     //getting watchdog pid
     int fd_watchdog_pid = open(fifo_watchdog_pid, O_RDONLY);
@@ -71,20 +75,19 @@ int main(int argc, char *argv[])
     write(fd_inspection_pid, buffer, SIZE);
     close(fd_inspection_pid);
 
-    fd_motX_value = open(fifo_motorX_value, O_RDONLY);
-    fd_motZ_value = open(fifo_motorZ_value, O_RDONLY);
     fd_motX = open(fifo_inspection_motorX, O_WRONLY);
     fd_motZ = open(fifo_inspection_motorZ, O_WRONLY);
     fd_stdin = fileno(stdin);
+    int fd_motX_pid_i = open(fifo_motX_pid_inspection, O_RDONLY);
+    int fd_motZ_pid_i = open(fifo_motZ_pid_inspection, O_RDONLY);
 
     //getting motors pid
-    read(fd_motX_value, buffer, SIZE);
+    read(fd_motX_pid_i, buffer, SIZE);
     pid_motX = atoi(buffer);
-    read(fd_motZ_value, buffer, SIZE);
+    read(fd_motZ_pid_i, buffer, SIZE);
     pid_motZ = atoi(buffer);
-
-    close(fd_motX_value);
-    close(fd_motZ_value);
+    close(fd_motX_pid_i);
+    close(fd_motZ_pid_i);
 
     fd_motX_value = open(fifo_motorX_value, O_RDONLY);
     fd_motZ_value = open(fifo_motorZ_value, O_RDONLY);
