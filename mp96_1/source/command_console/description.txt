@@ -1,0 +1,3 @@
+The command console is capable of reading some user inputs in order to move the hoist.
+In particular, it displays all the instruction, and then wait for some input.
+If the input command is recognized, using a control algorithm to avoid wrong inputs, it sends it to the relative motor.

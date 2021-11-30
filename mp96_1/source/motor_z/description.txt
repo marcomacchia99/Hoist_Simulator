@@ -1,0 +1,6 @@
+The motor z process manage the movement of the relative motor.
+It constantly waits for some command sent by the command or inspectionc consoles.
+If a command is sent, the motor z detects it, reads it and then executes the command.
+It is capable of handling a the emergency stop signal.
+Every time a movement is done, this process sends to the watchdog a signal, in order to let it know that something is happening.
+It also shares the extimate real time position to the insepction console.

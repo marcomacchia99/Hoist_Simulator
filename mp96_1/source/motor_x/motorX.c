@@ -35,7 +35,7 @@ void sigusr1_handler(int sig)
 
 void sigusr2_handler(int sig)
 {
-    sprintf(last_input_inspection, "%d", 'r');
+    sprintf(last_input_inspection,"%d",'r');
 }
 
 int main(int argc, char *argv[])
@@ -54,19 +54,19 @@ int main(int argc, char *argv[])
     char *fifo_motorX_value = "/tmp/motorX_value";
     char *fifo_watchdog_pid = "/tmp/watchdog_pid_x";
     char *fifo_motX_pid = "/tmp/pid_x";
-        char *fifo_motX_pid_inspection = "/tmp/pid_x_i";
     mkfifo(fifo_inspection_motorX, 0666);
     mkfifo(fifo_command_motorX, 0666);
     mkfifo(fifo_motorX_value, 0666);
     mkfifo(fifo_watchdog_pid, 0666);
-    mkfifo(fifo_motX_pid, 0666);
-    mkfifo(fifo_motX_pid_inspection,0666);
+    mkfifo(fifo_motX_pid,0666);
 
+    
     //getting watchdog pid
     int fd_watchdog_pid = open(fifo_watchdog_pid, O_RDONLY);
     read(fd_watchdog_pid, buffer, SIZE);
     pid_watchdog = atoi(buffer);
     close(fd_watchdog_pid);
+    
 
     struct timeval timeout;
     fd_set readfds;
@@ -74,14 +74,16 @@ int main(int argc, char *argv[])
     float random_error;
     float movement;
     fd_command = open(fifo_command_motorX, O_RDONLY);
+    fd_motorX = open(fifo_motorX_value, O_WRONLY);
     fd_inspection = open(fifo_inspection_motorX, O_RDONLY);
 
-    //writing own pid for inspection console
-    int fd_motX_pid_i = open(fifo_motX_pid_inspection, O_WRONLY);
-    sprintf(buffer, "%d", (int)getpid());
-    write(fd_motX_pid_i, buffer, SIZE);
-    close(fd_motX_pid_i);
 
+    //writing own pid for inspection console
+    sprintf(buffer, "%d", (int)getpid());
+    write(fd_motorX, buffer, strlen(buffer) + 1);
+    close(fd_motorX);
+
+    
     //writing own pid
     int fd_motX_pid = open(fifo_motX_pid, O_WRONLY);
     sprintf(buffer, "%d", (int)getpid());
@@ -89,6 +91,7 @@ int main(int argc, char *argv[])
     close(fd_motX_pid);
 
     fd_motorX = open(fifo_motorX_value, O_WRONLY);
+    
 
     system("clear");
     while (1)
@@ -121,7 +124,7 @@ int main(int argc, char *argv[])
                     position = 0;
                     sprintf(buffer, "%f", position);
                     write(fd_motorX, buffer, strlen(buffer) + 1);
-                    strcpy(last_input_command, "");
+                    strcpy(last_input_command,"");
                     sleep(movement_time);
                 }
                 else
@@ -131,7 +134,7 @@ int main(int argc, char *argv[])
                     write(fd_motorX, buffer, strlen(buffer) + 1);
                     sleep(movement_time);
                 }
-                kill(pid_watchdog, SIGUSR1);
+                kill(pid_watchdog,SIGUSR1);
                 break;
 
             case 'L':
@@ -144,7 +147,7 @@ int main(int argc, char *argv[])
                     position = max_x;
                     sprintf(buffer, "%f", position);
                     write(fd_motorX, buffer, strlen(buffer) + 1);
-                    strcpy(last_input_command, "");
+                    strcpy(last_input_command,"");
                     sleep(movement_time);
                 }
                 else
@@ -154,20 +157,21 @@ int main(int argc, char *argv[])
                     write(fd_motorX, buffer, strlen(buffer) + 1);
                     sleep(movement_time);
                 }
-                kill(pid_watchdog, SIGUSR1);
+                kill(pid_watchdog,SIGUSR1);
                 break;
             case 'X':
             case 'x':
                 //stop x
                 write(fd_motorX, buffer, strlen(buffer) + 1);
-                kill(pid_watchdog, SIGUSR1);
-                strcpy(last_input_command, "");
+                kill(pid_watchdog,SIGUSR1);
+                strcpy(last_input_command,"");
                 sleep(movement_time);
                 break;
             default:
                 break;
             }
 
+            
             switch (atoi(last_input_inspection))
             {
             case 'R':
@@ -179,7 +183,7 @@ int main(int argc, char *argv[])
                     sprintf(buffer, "%f", position);
                     write(fd_motorX, buffer, strlen(buffer) + 1);
                     strcpy(last_input_inspection, "");
-                    kill(pid_watchdog, SIGUSR1);
+                    kill(pid_watchdog,SIGUSR1);
                     sleep(movement_time);
                 }
                 else
@@ -187,7 +191,7 @@ int main(int argc, char *argv[])
                     position += movement;
                     sprintf(buffer, "%f", position);
                     write(fd_motorX, buffer, strlen(buffer) + 1);
-                    kill(pid_watchdog, SIGUSR1);
+                    kill(pid_watchdog,SIGUSR1);
                     sleep(movement_time);
                 }
                 break;

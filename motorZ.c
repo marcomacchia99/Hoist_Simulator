@@ -25,19 +25,9 @@ char last_input_inspection[SIZE];
 
 int pid_watchdog;
 
-void createfifo(const char *path, mode_t mode)
-{
-    if (mkfifo(path, mode) == -1)
-    {
-        perror("Error creating fifo");
-    }
-}
-
 void sigusr1_handler(int sig)
 {
-    printf("EMERGENCY BUTTON PRESSED\n");
     sprintf(buffer, "%f", position);
-    printf("%.3f\n", position);
     write(fd_motorZ, buffer, strlen(buffer) + 1);
     strcpy(last_input_inspection, "");
     strcpy(last_input_command, "");
@@ -45,8 +35,7 @@ void sigusr1_handler(int sig)
 
 void sigusr2_handler(int sig)
 {
-    printf("RESET RECEIVED\n");
-    sprintf(last_input_inspection,"%d",'r');
+    sprintf(last_input_inspection, "%d", 'r');
 }
 
 int main(int argc, char *argv[])
@@ -65,41 +54,42 @@ int main(int argc, char *argv[])
     char *fifo_motorZ_value = "/tmp/motorZ_value";
     char *fifo_watchdog_pid = "/tmp/watchdog_pid_z";
     char *fifo_motZ_pid = "/tmp/pid_z";
+    char *fifo_motZ_pid_inspection = "/tmp/pid_z_i";
 
-    createfifo(fifo_inspection_motorZ, 0666);
-    createfifo(fifo_command_motorZ, 0666);
-    createfifo(fifo_motorZ_value, 0666);
-    createfifo(fifo_watchdog_pid, 0666);
-    createfifo(fifo_motZ_pid, 0666);
+    mkfifo(fifo_inspection_motorZ, 0666);
+    mkfifo(fifo_command_motorZ, 0666);
+    mkfifo(fifo_motorZ_value, 0666);
+    mkfifo(fifo_watchdog_pid, 0666);
+    mkfifo(fifo_motZ_pid, 0666);
+    mkfifo(fifo_motZ_pid_inspection,0666);
 
-    printf("1\n");
     int fd_watchdog_pid = open(fifo_watchdog_pid, O_RDONLY);
     read(fd_watchdog_pid, buffer, SIZE);
     pid_watchdog = atoi(buffer);
 
     close(fd_watchdog_pid);
 
-    printf("1\n");
-
     struct timeval timeout;
     fd_set readfds;
 
     float random_error;
     float movement;
-    fd_command = open(fifo_command_motorZ, O_RDONLY);
-    fd_motorZ = open(fifo_motorZ_value, O_WRONLY);
 
-    fd_inspection = open(fifo_inspection_motorZ, O_RDONLY);
+    fd_command = open(fifo_command_motorZ, O_RDONLY);
+fd_inspection = open(fifo_inspection_motorZ, O_RDONLY);
 
     //writing own pid for inspection console
+    int fd_motZ_pid_i = open(fifo_motZ_pid_inspection, O_WRONLY);
     sprintf(buffer, "%d", (int)getpid());
-    write(fd_motorZ, buffer, strlen(buffer) + 1);
-    close(fd_motorZ);
+    write(fd_motZ_pid_i, buffer, SIZE);
+    close(fd_motZ_pid_i);
 
     //writing own pid
     int fd_motZ_pid = open(fifo_motZ_pid, O_WRONLY);
     sprintf(buffer, "%d", (int)getpid());
     write(fd_motZ_pid, buffer, SIZE);
+    sprintf(buffer, "%f", position);
+    write(fd_motorZ, buffer, strlen(buffer) + 1);
     close(fd_motZ_pid);
 
     fd_motorZ = open(fifo_motorZ_value, O_WRONLY);
@@ -135,7 +125,6 @@ int main(int argc, char *argv[])
                 {
                     position = 0;
                     sprintf(buffer, "%f", position);
-                    printf("%.3f\n", position);
                     write(fd_motorZ, buffer, strlen(buffer) + 1);
                     strcpy(last_input_command, "");
                     sleep(movement_time);
@@ -144,7 +133,6 @@ int main(int argc, char *argv[])
                 {
                     position += movement;
                     sprintf(buffer, "%f", position);
-                    printf("%.3f\n", position);
                     write(fd_motorZ, buffer, strlen(buffer) + 1);
                     sleep(movement_time);
                 }
@@ -160,7 +148,6 @@ int main(int argc, char *argv[])
                 {
                     position = max_z;
                     sprintf(buffer, "%f", position);
-                    printf("%.3f\n", position);
                     write(fd_motorZ, buffer, strlen(buffer) + 1);
                     strcpy(last_input_command, "");
                     sleep(movement_time);
@@ -169,7 +156,6 @@ int main(int argc, char *argv[])
                 {
                     position += movement;
                     sprintf(buffer, "%f", position);
-                    printf("%.3f\n", position);
                     write(fd_motorZ, buffer, strlen(buffer) + 1);
                     sleep(movement_time);
                 }
@@ -177,8 +163,6 @@ int main(int argc, char *argv[])
                 break;
             case 'Z':
             case 'z':
-                printf("%.3f\n", position);
-                fflush(stdout);
                 write(fd_motorZ, buffer, strlen(buffer) + 1);
                 kill(pid_watchdog, SIGUSR1);
                 strcpy(last_input_command, "");
@@ -193,43 +177,24 @@ int main(int argc, char *argv[])
             case 'R':
             case 'r':
                 //reset
-                while (position > 0)
+                movement = -(5 * movement_distance) + random_error;
+                if (position + movement <= 0)
                 {
-                    movement = -(5 * movement_distance) + random_error;
-                    if (position + movement <= 0)
-                    {
-                        position = 0;
-                        sprintf(buffer, "%f", position);
-                        printf("%.3f\n", position);
-                        write(fd_motorZ, buffer, strlen(buffer) + 1);
-                        kill(pid_watchdog, SIGUSR1);
-                        sleep(movement_time);
-                    }
-                    else
-                    {
-                        position += movement;
-                        sprintf(buffer, "%f", position);
-                        printf("%.3f\n", position);
-                        write(fd_motorZ, buffer, strlen(buffer) + 1);
-                        kill(pid_watchdog, SIGUSR1);
-                        sleep(movement_time);
-                    }
+                    position = 0;
+                    sprintf(buffer, "%f", position);
+                    write(fd_motorZ, buffer, strlen(buffer) + 1);
                     strcpy(last_input_inspection, "");
+                    kill(pid_watchdog, SIGUSR1);
+                    sleep(movement_time);
+                }
+                else
+                {
+                    position += movement;
                     sprintf(buffer, "%f", position);
                     write(fd_motorZ, buffer, strlen(buffer) + 1);
                     kill(pid_watchdog, SIGUSR1);
+                    sleep(movement_time);
                 }
-
-                break;
-            case 'S':
-            case 's':
-                //emergency stop
-
-                sprintf(buffer, "%f", position);
-                printf("%.3f\n", position);
-                write(fd_motorZ, buffer, strlen(buffer) + 1);
-                kill(pid_watchdog, SIGUSR1);
-                sleep(movement_time);
                 break;
             default:
                 break;

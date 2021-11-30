@@ -1,0 +1,4 @@
+The inspection console is used by the user to reading the position of the joist and to sending the reset and emergency stop command.
+It recieves the position from the two motors (with a small measurement error), and it displays to the user.
+If the button R is pressed, the inspection console sends the reset command to the motors.
+If the button S is pressed, the inspection console generates a signal handled by the two motors, which indicates they have to immediately stop.

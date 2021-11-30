@@ -1,0 +1,2 @@
+The starter process manages the creation of all the other processes.
+When the program starts, this process simply spawns all the necessry consoles.

@@ -1,0 +1,4 @@
+The watchdog process costantly checks all the others processes (except the starter one), and it detects is the system is doing something or not.
+It uses a timer which is resetted every time a process does something.
+In order to check the other processes, the watchdog receives a signal every time some movement is done.
+If all processes do nothing for at least 60 seconds, the watchdog sends a reset command to the motors.
