@@ -63,18 +63,7 @@ int main(int argc, char *argv[])
     pid_inspection = spawn(program, arg_list_2);
     pid_watchdog = spawn(program, arg_list_5);
 
-    fd_watchdog = open(fifo_starter_watchdog, O_WRONLY);
-    sprintf(buffer, "%d", pid_command);
-    write(fd_watchdog, buffer, strlen(buffer) + 1);
-    sprintf(buffer, "%d", pid_inspection);
-    write(fd_watchdog, buffer, strlen(buffer) + 1);
-    sprintf(buffer, "%d", pid_motorX);
-    write(fd_watchdog, buffer, strlen(buffer) + 1);
-    sprintf(buffer, "%d", pid_motorZ);
-    write(fd_watchdog, buffer, strlen(buffer) + 1);
 
-    close(fd_watchdog);
-    unlink(fifo_starter_watchdog);
 
     return 0;
 }

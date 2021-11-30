@@ -33,23 +33,6 @@ int main(int argc, char *argv[])
 
     signal(SIGUSR1, signal_handler);
 
-    char *fifo_starter_watchdog = "/tmp/watchdog";
-    mkfifo(fifo_starter_watchdog, 0666);
-
-    fd_starter = open(fifo_starter_watchdog, O_RDONLY);
-
-    read(fd_starter, buffer, SIZE);
-    pid_command = atoi(buffer);
-    read(fd_starter, buffer, SIZE);
-    pid_inspection = atoi(buffer);
-    read(fd_starter, buffer, SIZE);
-    pid_motX = atoi(buffer);
-    read(fd_starter, buffer, SIZE);
-    pid_motZ = atoi(buffer);
-
-    close(fd_starter);
-    unlink(fifo_starter_watchdog);
-
     char *fifo_watchdog_pid_command = "/tmp/watchdog_pid_c";
     char *fifo_watchdog_pid_inspection = "/tmp/watchdog_pid_i";
     char *fifo_watchdog_pid_motX = "/tmp/watchdog_pid_x";
@@ -73,6 +56,7 @@ int main(int argc, char *argv[])
     int fd_watchdog_pid_inspection = open(fifo_watchdog_pid_inspection, O_WRONLY);
     int fd_watchdog_pid_motX = open(fifo_watchdog_pid_motX, O_WRONLY);
     int fd_watchdog_pid_motZ = open(fifo_watchdog_pid_motZ, O_WRONLY);
+    
 
     sprintf(buffer, "%d", (int)getpid());
     write(fd_watchdog_pid_command, buffer, strlen(buffer) + 1);
@@ -92,7 +76,9 @@ int main(int argc, char *argv[])
     close(fd_watchdog_pid_motZ);
     unlink(fifo_watchdog_pid_motZ);
 
-    
+
+
+    //reading other processes's pid
     int fd_pid_command = open(fifo_command_pid, O_RDONLY);
     int fd_pid_inspection = open(fifo_inspection_pid, O_RDONLY);
     int fd_pid_motX = open(fifo_motX_pid, O_RDONLY);
