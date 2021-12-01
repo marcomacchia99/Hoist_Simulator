@@ -22,8 +22,11 @@ int pid_command;
 
 time_t time_check;
 
+FILE *log_file;
+
 void signal_handler(int sig)
 {
+    fprintf(log_file,"watchdog: signal received\n");
     time_check = time(NULL);
 }
 
@@ -31,6 +34,8 @@ int main(int argc, char *argv[])
 {
 
     signal(SIGUSR1, signal_handler);
+
+    log_file = fopen("./../logs/log.txt", "a");
 
     char *fifo_watchdog_pid_command = "/tmp/watchdog_pid_c";
     char *fifo_watchdog_pid_inspection = "/tmp/watchdog_pid_i";
@@ -75,6 +80,10 @@ int main(int argc, char *argv[])
     close(fd_watchdog_pid_motZ);
     unlink(fifo_watchdog_pid_motZ);
 
+    fprintf(log_file,"watchdog: sent pid to other processes\n");
+
+
+
 
 
     //reading other processes's pid
@@ -90,6 +99,12 @@ int main(int argc, char *argv[])
     pid_motX=atoi(buffer);
     read(fd_pid_motZ,buffer,SIZE);
     pid_motZ=atoi(buffer);
+    close(fd_pid_command);
+    close(fd_pid_inspection);
+    close(fd_pid_motX);
+    close(fd_pid_motZ);
+
+    fprintf(log_file,"watchdog: sent read other processes's pid\n");
 
 
 
@@ -105,6 +120,10 @@ int main(int argc, char *argv[])
             time_check = time(NULL);
         }
     }
-
+    fclose(log_file);
+    unlink(fifo_command_pid);
+    unlink(fifo_inspection_pid);
+    unlink(fifo_motX_pid);
+    unlink(fifo_motZ_pid);
     return 0;
 }

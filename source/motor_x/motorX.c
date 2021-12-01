@@ -25,8 +25,11 @@ char last_input_inspection[SIZE];
 
 int pid_watchdog;
 
+FILE* log_file;
+
 void sigusr1_handler(int sig)
 {
+    fprintf(log_file,"motorX: emergency stop received\n");
     sprintf(buffer, "%f", position);
     write(fd_motorX, buffer, strlen(buffer) + 1);
     strcpy(last_input_inspection, "");
@@ -35,6 +38,7 @@ void sigusr1_handler(int sig)
 
 void sigusr2_handler(int sig)
 {
+    fprintf(log_file,"motorXs: reset received from watchdog\n");
     sprintf(last_input_inspection, "%d", 'r');
 }
 
@@ -54,13 +58,13 @@ int main(int argc, char *argv[])
     char *fifo_motorX_value = "/tmp/motorX_value";
     char *fifo_watchdog_pid = "/tmp/watchdog_pid_x";
     char *fifo_motX_pid = "/tmp/pid_x";
-        char *fifo_motX_pid_inspection = "/tmp/pid_x_i";
+    char *fifo_motX_pid_inspection = "/tmp/pid_x_i";
     mkfifo(fifo_inspection_motorX, 0666);
     mkfifo(fifo_command_motorX, 0666);
     mkfifo(fifo_motorX_value, 0666);
     mkfifo(fifo_watchdog_pid, 0666);
     mkfifo(fifo_motX_pid, 0666);
-    mkfifo(fifo_motX_pid_inspection,0666);
+    mkfifo(fifo_motX_pid_inspection, 0666);
 
     //getting watchdog pid
     int fd_watchdog_pid = open(fifo_watchdog_pid, O_RDONLY);
@@ -89,6 +93,8 @@ int main(int argc, char *argv[])
     close(fd_motX_pid);
 
     fd_motorX = open(fifo_motorX_value, O_WRONLY);
+
+    log_file = fopen("./../logs/log.txt", "a");
 
     system("clear");
     while (1)
@@ -131,6 +137,7 @@ int main(int argc, char *argv[])
                     write(fd_motorX, buffer, strlen(buffer) + 1);
                     sleep(movement_time);
                 }
+                fprintf(log_file, "X = %f\n", position);
                 kill(pid_watchdog, SIGUSR1);
                 break;
 
@@ -154,12 +161,14 @@ int main(int argc, char *argv[])
                     write(fd_motorX, buffer, strlen(buffer) + 1);
                     sleep(movement_time);
                 }
+                fprintf(log_file, "X = %f\n", position);
                 kill(pid_watchdog, SIGUSR1);
                 break;
             case 'X':
             case 'x':
                 //stop x
                 write(fd_motorX, buffer, strlen(buffer) + 1);
+                fprintf(log_file, "X = %f\n", position);
                 kill(pid_watchdog, SIGUSR1);
                 strcpy(last_input_command, "");
                 sleep(movement_time);
@@ -168,10 +177,8 @@ int main(int argc, char *argv[])
                 break;
             }
 
-            switch (atoi(last_input_inspection))
+            if (atoi(last_input_inspection) == 'r' || atoi(last_input_inspection) == 'R')
             {
-            case 'R':
-            case 'r':
                 movement = -(5 * movement_distance) + random_error;
                 if (position + movement <= 0)
                 {
@@ -190,30 +197,30 @@ int main(int argc, char *argv[])
                     kill(pid_watchdog, SIGUSR1);
                     sleep(movement_time);
                 }
-                break;
-            default:
-                break;
+                fprintf(log_file, "X = %f\n", position);
             }
             break;
         case -1: //error
-
-            perror("Error inside motorX: ");
-            fflush(stdout);
+            fprintf(log_file, "Error inside motorX");
             break;
         default: //if something is ready, we read it
             if (FD_ISSET(fd_command, &readfds))
             {
 
                 read(fd_command, last_input_command, SIZE);
+                fprintf(log_file, "motorX: instruction from command console\n");
+
             }
             if (FD_ISSET(fd_inspection, &readfds))
             {
                 read(fd_inspection, last_input_inspection, SIZE);
+                fprintf(log_file, "motorX: instruction from inpsection console\n");
                 strcpy(last_input_command, "");
             }
             break;
         }
     }
+    fclose(log_file);
     close(fd_command);
     unlink(fifo_command_motorX);
     close(fd_inspection);

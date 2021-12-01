@@ -25,8 +25,11 @@ char last_input_inspection[SIZE];
 
 int pid_watchdog;
 
+FILE* log_file;
+
 void sigusr1_handler(int sig)
 {
+    fprintf(log_file,"motorZ: emergency stop received\n");
     sprintf(buffer, "%f", position);
     write(fd_motorZ, buffer, strlen(buffer) + 1);
     strcpy(last_input_inspection, "");
@@ -35,6 +38,7 @@ void sigusr1_handler(int sig)
 
 void sigusr2_handler(int sig)
 {
+    fprintf(log_file,"motorZ: reset received from watchdog\n");
     sprintf(last_input_inspection, "%d", 'r');
 }
 
@@ -94,6 +98,8 @@ fd_inspection = open(fifo_inspection_motorZ, O_RDONLY);
 
     fd_motorZ = open(fifo_motorZ_value, O_WRONLY);
 
+    log_file = fopen("./../logs/log.txt", "a");
+
     system("clear");
     while (1)
     {
@@ -136,6 +142,7 @@ fd_inspection = open(fifo_inspection_motorZ, O_RDONLY);
                     write(fd_motorZ, buffer, strlen(buffer) + 1);
                     sleep(movement_time);
                 }
+                fprintf(log_file, "Z = %f\n", position);
                 kill(pid_watchdog, SIGUSR1);
                 break;
 
@@ -159,11 +166,13 @@ fd_inspection = open(fifo_inspection_motorZ, O_RDONLY);
                     write(fd_motorZ, buffer, strlen(buffer) + 1);
                     sleep(movement_time);
                 }
+                fprintf(log_file, "Z = %f\n", position);
                 kill(pid_watchdog, SIGUSR1);
                 break;
             case 'Z':
             case 'z':
                 write(fd_motorZ, buffer, strlen(buffer) + 1);
+                fprintf(log_file, "Z = %f\n", position);
                 kill(pid_watchdog, SIGUSR1);
                 strcpy(last_input_command, "");
                 sleep(movement_time);
@@ -172,11 +181,7 @@ fd_inspection = open(fifo_inspection_motorZ, O_RDONLY);
                 break;
             }
 
-            switch (atoi(last_input_inspection))
-            {
-            case 'R':
-            case 'r':
-                //reset
+            if(atoi(last_input_inspection)=='r' || atoi(last_input_inspection)=='R' ) {
                 movement = -(5 * movement_distance) + random_error;
                 if (position + movement <= 0)
                 {
@@ -195,28 +200,29 @@ fd_inspection = open(fifo_inspection_motorZ, O_RDONLY);
                     kill(pid_watchdog, SIGUSR1);
                     sleep(movement_time);
                 }
-                break;
-            default:
-                break;
+                fprintf(log_file, "Z = %f\n", position);
             }
             break;
 
         case -1: //error
-            perror("Error inside motorZ: ");
-            fflush(stdout);
+            fprintf(log_file, "Error inside motorX");
             break;
         default: //if something is ready, we read it
             if (FD_ISSET(fd_command, &readfds))
                 read(fd_command, last_input_command, SIZE);
+                fprintf(log_file, "motorZ: instruction from command console\n");
             if (FD_ISSET(fd_inspection, &readfds))
             {
 
                 read(fd_inspection, last_input_inspection, SIZE);
+                fprintf(log_file, "motorZ: instruction from inpsection console\n");
                 strcpy(last_input_command, "");
             }
             break;
         }
     }
+
+    fclose(log_file);
     close(fd_command);
     unlink(fifo_command_motorZ);
     close(fd_inspection);

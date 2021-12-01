@@ -50,6 +50,13 @@ int main(int argc, char *argv[])
     pid_watchdog = spawn("./../watchdog/watchdog", arg_list_5);
 
 
+    //creating new log file, and keep the precedent
+    remove("./../logs/log-old.txt");
+    rename("./../logs/log.txt","./../logs/log-old.txt");
+    FILE* log = fopen("./../logs/log.txt","w");
+    fclose(log);
+
+
 
     return 0;
 }

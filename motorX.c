@@ -90,6 +90,8 @@ int main(int argc, char *argv[])
 
     fd_motorX = open(fifo_motorX_value, O_WRONLY);
 
+
+
     system("clear");
     while (1)
     {
@@ -168,10 +170,7 @@ int main(int argc, char *argv[])
                 break;
             }
 
-            switch (atoi(last_input_inspection))
-            {
-            case 'R':
-            case 'r':
+            if(atoi(last_input_inspection)=='r' || atoi(last_input_inspection)=='R' ) {
                 movement = -(5 * movement_distance) + random_error;
                 if (position + movement <= 0)
                 {
@@ -190,9 +189,6 @@ int main(int argc, char *argv[])
                     kill(pid_watchdog, SIGUSR1);
                     sleep(movement_time);
                 }
-                break;
-            default:
-                break;
             }
             break;
         case -1: //error

@@ -172,11 +172,7 @@ fd_inspection = open(fifo_inspection_motorZ, O_RDONLY);
                 break;
             }
 
-            switch (atoi(last_input_inspection))
-            {
-            case 'R':
-            case 'r':
-                //reset
+            if(atoi(last_input_inspection)=='r' || atoi(last_input_inspection)=='R' ) {
                 movement = -(5 * movement_distance) + random_error;
                 if (position + movement <= 0)
                 {
@@ -195,12 +191,8 @@ fd_inspection = open(fifo_inspection_motorZ, O_RDONLY);
                     kill(pid_watchdog, SIGUSR1);
                     sleep(movement_time);
                 }
-                break;
-            default:
-                break;
             }
             break;
-
         case -1: //error
             perror("Error inside motorZ: ");
             fflush(stdout);
