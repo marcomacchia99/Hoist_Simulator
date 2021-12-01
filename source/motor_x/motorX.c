@@ -25,11 +25,12 @@ char last_input_inspection[SIZE];
 
 int pid_watchdog;
 
-FILE* log_file;
+FILE *log_file;
 
 void sigusr1_handler(int sig)
 {
-    fprintf(log_file,"motorX: emergency stop received\n");
+    fprintf(log_file, "motorX: emergency stop received\n");
+    fflush(log_file);
     sprintf(buffer, "%f", position);
     write(fd_motorX, buffer, strlen(buffer) + 1);
     strcpy(last_input_inspection, "");
@@ -38,7 +39,8 @@ void sigusr1_handler(int sig)
 
 void sigusr2_handler(int sig)
 {
-    fprintf(log_file,"motorXs: reset received from watchdog\n");
+    fprintf(log_file, "motorX: reset received from watchdog\n");
+    fflush(log_file);
     sprintf(last_input_inspection, "%d", 'r');
 }
 
@@ -138,6 +140,7 @@ int main(int argc, char *argv[])
                     sleep(movement_time);
                 }
                 fprintf(log_file, "X = %f\n", position);
+                fflush(log_file);
                 kill(pid_watchdog, SIGUSR1);
                 break;
 
@@ -162,6 +165,7 @@ int main(int argc, char *argv[])
                     sleep(movement_time);
                 }
                 fprintf(log_file, "X = %f\n", position);
+                fflush(log_file);
                 kill(pid_watchdog, SIGUSR1);
                 break;
             case 'X':
@@ -198,23 +202,23 @@ int main(int argc, char *argv[])
                     sleep(movement_time);
                 }
                 fprintf(log_file, "X = %f\n", position);
+                fflush(log_file);
             }
             break;
         case -1: //error
             fprintf(log_file, "Error inside motorX");
+            fflush(log_file);
+
             break;
         default: //if something is ready, we read it
             if (FD_ISSET(fd_command, &readfds))
             {
 
                 read(fd_command, last_input_command, SIZE);
-                fprintf(log_file, "motorX: instruction from command console\n");
-
             }
             if (FD_ISSET(fd_inspection, &readfds))
             {
                 read(fd_inspection, last_input_inspection, SIZE);
-                fprintf(log_file, "motorX: instruction from inpsection console\n");
                 strcpy(last_input_command, "");
             }
             break;

@@ -33,15 +33,34 @@ char buffer[SIZE];
 int fd_watchdog;
 int fd_inspection;
 
+int int_signal = 0;
+
+void kill_all(int sig)
+{
+    kill(SIGINT, pid_motorX);
+    kill(SIGINT, pid_motorZ);
+    kill(SIGINT, pid_command);
+    kill(SIGINT, pid_inspection);
+    kill(SIGINT, pid_watchdog);
+    int_signal = 1;
+}
+
 int main(int argc, char *argv[])
 {
+    //creating new log file, and keep the precedent
+    remove("./../logs/log-old.txt");
+    rename("./../logs/log.txt", "./../logs/log-old.txt");
+    FILE *log = fopen("./../logs/log.txt", "w");
+    fclose(log);
+
+    signal(SIGINT, kill_all);
 
     char console[] = "/usr/bin/konsole";
     char *arg_list_1[] = {"/usr/bin/konsole", "-e", "./../command_console/commandConsole", "", (char *)NULL};
     char *arg_list_2[] = {"/usr/bin/konsole", "-e", "./../inspection_console/inspectionConsole", "", (char *)NULL};
-    char *arg_list_3[] = { "./../motor_x/motorX", "", (char *)NULL};
-    char *arg_list_4[] = { "./../motor_z/motorZ", "", (char *)NULL};
-    char *arg_list_5[] = { "./../watchdog/watchdog", "", (char *)NULL};
+    char *arg_list_3[] = {"./../motor_x/motorX", "", (char *)NULL};
+    char *arg_list_4[] = {"./../motor_z/motorZ", "", (char *)NULL};
+    char *arg_list_5[] = {"./../watchdog/watchdog", "", (char *)NULL};
 
     pid_motorX = spawn("./../motor_x/motorX", arg_list_3);
     pid_motorZ = spawn("./../motor_z/motorZ", arg_list_4);
@@ -49,14 +68,8 @@ int main(int argc, char *argv[])
     pid_inspection = spawn(console, arg_list_2);
     pid_watchdog = spawn("./../watchdog/watchdog", arg_list_5);
 
-
-    //creating new log file, and keep the precedent
-    remove("./../logs/log-old.txt");
-    rename("./../logs/log.txt","./../logs/log-old.txt");
-    FILE* log = fopen("./../logs/log.txt","w");
-    fclose(log);
-
-
+    while (int_signal == 0)
+        ;
 
     return 0;
 }

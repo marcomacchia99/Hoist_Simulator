@@ -26,7 +26,8 @@ FILE *log_file;
 
 void signal_handler(int sig)
 {
-    fprintf(log_file,"watchdog: signal received\n");
+    fprintf(log_file, "watchdog: signal received\n");
+    fflush(log_file);
     time_check = time(NULL);
 }
 
@@ -60,7 +61,6 @@ int main(int argc, char *argv[])
     int fd_watchdog_pid_inspection = open(fifo_watchdog_pid_inspection, O_WRONLY);
     int fd_watchdog_pid_motX = open(fifo_watchdog_pid_motX, O_WRONLY);
     int fd_watchdog_pid_motZ = open(fifo_watchdog_pid_motZ, O_WRONLY);
-    
 
     sprintf(buffer, "%d", (int)getpid());
     write(fd_watchdog_pid_command, buffer, strlen(buffer) + 1);
@@ -80,33 +80,29 @@ int main(int argc, char *argv[])
     close(fd_watchdog_pid_motZ);
     unlink(fifo_watchdog_pid_motZ);
 
-    fprintf(log_file,"watchdog: sent pid to other processes\n");
-
-
-
-
+    fprintf(log_file, "watchdog: sent pid to other processes\n");
+    fflush(log_file);
 
     //reading other processes's pid
     int fd_pid_command = open(fifo_command_pid, O_RDONLY);
     int fd_pid_inspection = open(fifo_inspection_pid, O_RDONLY);
     int fd_pid_motX = open(fifo_motX_pid, O_RDONLY);
     int fd_pid_motZ = open(fifo_motZ_pid, O_RDONLY);
-    read(fd_pid_command,buffer,SIZE);
-    pid_command=atoi(buffer);
-    read(fd_pid_inspection,buffer,SIZE);
-    pid_inspection=atoi(buffer);
-    read(fd_pid_motX,buffer,SIZE);
-    pid_motX=atoi(buffer);
-    read(fd_pid_motZ,buffer,SIZE);
-    pid_motZ=atoi(buffer);
+    read(fd_pid_command, buffer, SIZE);
+    pid_command = atoi(buffer);
+    read(fd_pid_inspection, buffer, SIZE);
+    pid_inspection = atoi(buffer);
+    read(fd_pid_motX, buffer, SIZE);
+    pid_motX = atoi(buffer);
+    read(fd_pid_motZ, buffer, SIZE);
+    pid_motZ = atoi(buffer);
     close(fd_pid_command);
     close(fd_pid_inspection);
     close(fd_pid_motX);
     close(fd_pid_motZ);
 
-    fprintf(log_file,"watchdog: sent read other processes's pid\n");
-
-
+    fprintf(log_file, "watchdog: sent read other processes's pid\n");
+    fflush(log_file);
 
     time_check = time(NULL);
 
