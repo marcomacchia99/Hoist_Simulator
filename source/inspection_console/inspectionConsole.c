@@ -35,14 +35,23 @@ void print_position_and_instructions()
 int main(int argc, char *argv[])
 {
 
+    // variables for select function
     struct timeval timeout;
     timeout.tv_usec = 50;
     fd_set readfds;
     fd_set read_stdinfds;
+
+    //user input is stored here
     char input_ch[SIZE];
+
+    //motors position received from processes
     char value_from_motor_x[SIZE];
     char value_from_motor_z[SIZE];
+    
     char buffer[SIZE];
+
+
+    //defining and creating fifo
 
     char *fifo_inspection_motorX = "/tmp/inspection_motorX";
     char *fifo_inspection_motorZ = "/tmp/inspection_motorZ";
@@ -78,10 +87,11 @@ int main(int argc, char *argv[])
     fd_motX = open(fifo_inspection_motorX, O_WRONLY);
     fd_motZ = open(fifo_inspection_motorZ, O_WRONLY);
     fd_stdin = fileno(stdin);
-    int fd_motX_pid_i = open(fifo_motX_pid_inspection, O_RDONLY);
-    int fd_motZ_pid_i = open(fifo_motZ_pid_inspection, O_RDONLY);
+
 
     //getting motors pid
+    int fd_motX_pid_i = open(fifo_motX_pid_inspection, O_RDONLY);
+    int fd_motZ_pid_i = open(fifo_motZ_pid_inspection, O_RDONLY);
     read(fd_motX_pid_i, buffer, SIZE);
     pid_motX = atoi(buffer);
     read(fd_motZ_pid_i, buffer, SIZE);
@@ -133,7 +143,9 @@ int main(int argc, char *argv[])
 
             else
             {
+                //the actual command is stored here
                 char out_str[80];
+
                 sprintf(out_str, "%d", input_ch[0]);
 
                 switch (input_ch[0])
@@ -203,6 +215,7 @@ int main(int argc, char *argv[])
         }
     }
 
+    //close fifo
     close(fd_motX);
     unlink(fifo_inspection_motorX);
     close(fd_motZ);

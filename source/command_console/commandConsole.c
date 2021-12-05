@@ -58,6 +58,8 @@ int main(int argc, char *argv[])
     write(fd_command_pid, buffer, SIZE);
     close(fd_command_pid);
 
+
+    //user input is stored here
     char input_ch[80];
 
     print_instruction();
@@ -80,7 +82,9 @@ int main(int argc, char *argv[])
 
         else
         {
+            //the actual command is stored here
             char out_str[80];
+
             sprintf(out_str, "%d", input_ch[0]);
 
             switch (input_ch[0])
@@ -146,6 +150,8 @@ int main(int argc, char *argv[])
             }
         }
     }
+
+    //close fifo
     close(fd_motX);
     unlink(fifo_command_motorX);
     close(fd_motZ);

@@ -20,13 +20,17 @@ int fd_command;
 int fd_motorX;
 
 char buffer[SIZE];
+
+//last command received from the consoles
 char last_input_command[SIZE];
 char last_input_inspection[SIZE];
 
 int pid_watchdog;
 
+//log file used for debugging
 FILE *log_file;
 
+//sigusr1 is used to manage the emergency stop
 void sigusr1_handler(int sig)
 {
     fprintf(log_file, "motorX: emergency stop received\n");
@@ -37,6 +41,7 @@ void sigusr1_handler(int sig)
     strcpy(last_input_command, "");
 }
 
+//sigusr2 is used to manage the reset from the watchdog
 void sigusr2_handler(int sig)
 {
     fprintf(log_file, "motorX: reset received from watchdog\n");
@@ -49,18 +54,18 @@ int main(int argc, char *argv[])
 
     //randomizing seed for random error generator
     srand(time(NULL));
-    fflush(stdout);
 
     signal(SIGUSR1, sigusr1_handler);
     signal(SIGUSR2, sigusr2_handler);
 
-    //pipe file path
+    //defining and creating fifo
     char *fifo_command_motorX = "/tmp/command_motorX";
     char *fifo_inspection_motorX = "/tmp/inspection_motorX";
     char *fifo_motorX_value = "/tmp/motorX_value";
     char *fifo_watchdog_pid = "/tmp/watchdog_pid_x";
     char *fifo_motX_pid = "/tmp/pid_x";
     char *fifo_motX_pid_inspection = "/tmp/pid_x_i";
+
     mkfifo(fifo_inspection_motorX, 0666);
     mkfifo(fifo_command_motorX, 0666);
     mkfifo(fifo_motorX_value, 0666);
@@ -74,13 +79,12 @@ int main(int argc, char *argv[])
     pid_watchdog = atoi(buffer);
     close(fd_watchdog_pid);
 
+    //variables for select function
     struct timeval timeout;
     fd_set readfds;
 
     float random_error;
     float movement;
-    fd_command = open(fifo_command_motorX, O_RDONLY);
-    fd_inspection = open(fifo_inspection_motorX, O_RDONLY);
 
     //writing own pid for inspection console
     int fd_motX_pid_i = open(fifo_motX_pid_inspection, O_WRONLY);
@@ -95,7 +99,10 @@ int main(int argc, char *argv[])
     close(fd_motX_pid);
 
     fd_motorX = open(fifo_motorX_value, O_WRONLY);
+    fd_command = open(fifo_command_motorX, O_RDONLY);
+    fd_inspection = open(fifo_inspection_motorX, O_RDONLY);
 
+    //Open log file
     log_file = fopen("./../logs/log.txt", "a");
 
     system("clear");
@@ -117,6 +124,7 @@ int main(int argc, char *argv[])
         switch (select(FD_SETSIZE + 1, &readfds, NULL, NULL, &timeout))
         {
         case 0: //timeout reached, so nothing new
+
             switch (atoi(last_input_command))
             {
             case 'J':
@@ -127,20 +135,28 @@ int main(int argc, char *argv[])
                 if (position + movement < 0)
                 {
                     position = 0;
+                    //writing motor position to fifo
                     sprintf(buffer, "%f", position);
                     write(fd_motorX, buffer, strlen(buffer) + 1);
+                    //end reached, wait for a new command
                     strcpy(last_input_command, "");
+                    //simulating real movement
                     sleep(movement_time);
                 }
                 else
                 {
                     position += movement;
+                    //writing motor position to fifo
                     sprintf(buffer, "%f", position);
                     write(fd_motorX, buffer, strlen(buffer) + 1);
+                    //simulating real movement
                     sleep(movement_time);
                 }
+                //writing in log file
                 fprintf(log_file, "X = %f\n", position);
                 fflush(log_file);
+
+                //notify watchdog that something is happening
                 kill(pid_watchdog, SIGUSR1);
                 break;
 
@@ -152,29 +168,42 @@ int main(int argc, char *argv[])
                 if (position + movement > max_x)
                 {
                     position = max_x;
+                    //writing motor position to fifo
                     sprintf(buffer, "%f", position);
                     write(fd_motorX, buffer, strlen(buffer) + 1);
+                    //end reached, wait for a new command
                     strcpy(last_input_command, "");
+                    //simulating real movement
                     sleep(movement_time);
                 }
                 else
                 {
                     position += movement;
+                    //writing motor position to fifo
                     sprintf(buffer, "%f", position);
                     write(fd_motorX, buffer, strlen(buffer) + 1);
+                    //simulating real movement
                     sleep(movement_time);
                 }
+                //writing in log file
                 fprintf(log_file, "X = %f\n", position);
                 fflush(log_file);
+                //notify watchdog that something is happening
                 kill(pid_watchdog, SIGUSR1);
                 break;
             case 'X':
             case 'x':
                 //stop x
+
+                //writing motor position to fifo
                 write(fd_motorX, buffer, strlen(buffer) + 1);
+                //writing in log file
                 fprintf(log_file, "X = %f\n", position);
+                //notify watchdog that something is happening
                 kill(pid_watchdog, SIGUSR1);
+                //wait for a new command
                 strcpy(last_input_command, "");
+                //simulating real movement
                 sleep(movement_time);
                 break;
             default:
@@ -187,26 +216,36 @@ int main(int argc, char *argv[])
                 if (position + movement <= 0)
                 {
                     position = 0;
+                    //writing motor position to fifo
                     sprintf(buffer, "%f", position);
                     write(fd_motorX, buffer, strlen(buffer) + 1);
+                    //reset finished, wait for a new command
                     strcpy(last_input_inspection, "");
+                    //notify watchdog that something is happening
                     kill(pid_watchdog, SIGUSR1);
+                    //simulating real movement
                     sleep(movement_time);
                 }
                 else
                 {
                     position += movement;
+                    //writing motor position to fifo
                     sprintf(buffer, "%f", position);
                     write(fd_motorX, buffer, strlen(buffer) + 1);
+                    //notify watchdog that something is happening
                     kill(pid_watchdog, SIGUSR1);
+                    //simulating real movement
                     sleep(movement_time);
                 }
+                //writing in log file
                 fprintf(log_file, "X = %f\n", position);
                 fflush(log_file);
             }
             break;
         case -1: //error
-            fprintf(log_file, "Error inside motorX");
+
+            //writing in log file
+            fprintf(log_file, "Error inside motorX\n");
             fflush(log_file);
 
             break;
@@ -224,7 +263,10 @@ int main(int argc, char *argv[])
             break;
         }
     }
+    
+    //close log file
     fclose(log_file);
+    //close fifo
     close(fd_command);
     unlink(fifo_command_motorX);
     close(fd_inspection);

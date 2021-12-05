@@ -26,8 +26,10 @@ FILE *log_file;
 
 void signal_handler(int sig)
 {
+    //writing to log file
     fprintf(log_file, "watchdog: signal received\n");
     fflush(log_file);
+    //reset timer
     time_check = time(NULL);
 }
 
@@ -36,8 +38,10 @@ int main(int argc, char *argv[])
 
     signal(SIGUSR1, signal_handler);
 
+    //open log file
     log_file = fopen("./../logs/log.txt", "a");
 
+    //defining and opening fifo
     char *fifo_watchdog_pid_command = "/tmp/watchdog_pid_c";
     char *fifo_watchdog_pid_inspection = "/tmp/watchdog_pid_i";
     char *fifo_watchdog_pid_motX = "/tmp/watchdog_pid_x";
@@ -80,6 +84,7 @@ int main(int argc, char *argv[])
     close(fd_watchdog_pid_motZ);
     unlink(fifo_watchdog_pid_motZ);
 
+    //writing in log file
     fprintf(log_file, "watchdog: sent pid to other processes\n");
     fflush(log_file);
 
@@ -101,9 +106,11 @@ int main(int argc, char *argv[])
     close(fd_pid_motX);
     close(fd_pid_motZ);
 
+    //writing in log file
     fprintf(log_file, "watchdog: sent read other processes's pid\n");
     fflush(log_file);
 
+    //start timer
     time_check = time(NULL);
 
     while (1)
@@ -111,12 +118,17 @@ int main(int argc, char *argv[])
         sleep(1);
         if (difftime(time(NULL), time_check) >= TIMEDELTA)
         {
+            //if timer is more then TIMEDELTA send a reset signal to motors
             kill(pid_motX, SIGUSR2);
             kill(pid_motZ, SIGUSR2);
+            //reset timer
             time_check = time(NULL);
         }
     }
+
+    //close log file
     fclose(log_file);
+    //unlink fifo
     unlink(fifo_command_pid);
     unlink(fifo_inspection_pid);
     unlink(fifo_motX_pid);
