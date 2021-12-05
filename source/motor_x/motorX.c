@@ -86,6 +86,9 @@ int main(int argc, char *argv[])
     float random_error;
     float movement;
 
+    fd_command = open(fifo_command_motorX, O_RDONLY);
+    fd_inspection = open(fifo_inspection_motorX, O_RDONLY);
+    
     //writing own pid for inspection console
     int fd_motX_pid_i = open(fifo_motX_pid_inspection, O_WRONLY);
     sprintf(buffer, "%d", (int)getpid());
@@ -99,8 +102,6 @@ int main(int argc, char *argv[])
     close(fd_motX_pid);
 
     fd_motorX = open(fifo_motorX_value, O_WRONLY);
-    fd_command = open(fifo_command_motorX, O_RDONLY);
-    fd_inspection = open(fifo_inspection_motorX, O_RDONLY);
 
     //Open log file
     log_file = fopen("./../logs/log.txt", "a");
@@ -263,7 +264,7 @@ int main(int argc, char *argv[])
             break;
         }
     }
-    
+
     //close log file
     fclose(log_file);
     //close fifo

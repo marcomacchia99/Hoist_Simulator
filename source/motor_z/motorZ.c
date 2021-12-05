@@ -86,6 +86,9 @@ int main(int argc, char *argv[])
     float random_error;
     float movement;
 
+    fd_command = open(fifo_command_motorZ, O_RDONLY);
+    fd_inspection = open(fifo_inspection_motorZ, O_RDONLY);
+
     //writing own pid for inspection console
     int fd_motZ_pid_i = open(fifo_motZ_pid_inspection, O_WRONLY);
     sprintf(buffer, "%d", (int)getpid());
@@ -99,8 +102,6 @@ int main(int argc, char *argv[])
     close(fd_motZ_pid);
 
     fd_motorZ = open(fifo_motorZ_value, O_WRONLY);
-    fd_command = open(fifo_command_motorZ, O_RDONLY);
-    fd_inspection = open(fifo_inspection_motorZ, O_RDONLY);
 
     //Open log file
     log_file = fopen("./../logs/log.txt", "a");
